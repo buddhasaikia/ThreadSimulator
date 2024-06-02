@@ -9,11 +9,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import com.bs.threadsimulator.ui.screens.HomeScreen
+import com.bs.threadsimulator.ui.screens.HomeScreenRoute
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 
 class MainActivity : ComponentActivity() {
-    private val mainViewModel: MainViewModel by viewModels()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +24,8 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(title = { Text("Thread Simulator") })
                     }) { innerPadding ->
-                    HomeScreen(innerPadding, mainViewModel)
+                    val mainViewModel: MainViewModel by viewModels()
+                    HomeScreenRoute(innerPadding, mainViewModel)
                 }
             }
         }

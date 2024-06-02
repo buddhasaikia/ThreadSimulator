@@ -30,13 +30,13 @@ import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 
 @Composable
-fun HomeScreen(innerPadding: PaddingValues, mainViewModel: MainViewModel) {
+fun HomeScreenRoute(innerPadding: PaddingValues, mainViewModel: MainViewModel) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-    StockList(innerPadding, uiState)
+    HomeScreen(innerPadding, uiState)
 }
 
 @Composable
-fun StockList(innerPadding: PaddingValues, uiState: UIState) {
+fun HomeScreen(innerPadding: PaddingValues, uiState: UIState) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(uiState.companyList) {
             CompanyItem(it)
@@ -96,7 +96,7 @@ fun CompanyItem(company: Company) {
 @Composable
 fun StockListPreview() {
     ThreadSimulatorTheme {
-        StockList(
+        HomeScreen(
             PaddingValues(2.dp),
             uiState = UIState(MockDataSource().getCompanyList())
         )

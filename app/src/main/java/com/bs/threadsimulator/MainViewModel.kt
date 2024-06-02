@@ -8,13 +8,14 @@ import com.bs.threadsimulator.domain.UpdateCurrentPriceUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState())
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
-    val dataRepository = DataRepository()
+    private val dataRepository = DataRepository()
 
     init {
         start()
@@ -32,9 +33,9 @@ class MainViewModel : ViewModel() {
 
     fun startLiveTracking(symbol: String) {
         viewModelScope.launch {
-            UpdateCurrentPriceUseCase(dataRepository).execute(symbol).collect { resource ->
-                _uiState.update { uiState ->
-                    uiState.copy(companyList = uiState.companyList.map { company ->
+            UpdateCurrentPriceUseCase(dataRepository).execute(symbol).collectLatest { resource ->
+                _uiState.update { state ->
+                    state.copy(companyList = state.companyList.map { company ->
                         if (company.stock.symbol == resource.data?.symbol) {
                             company.copy(stock = resource.data)
                         } else {
@@ -42,7 +43,14 @@ class MainViewModel : ViewModel() {
                         }
                     })
                 }
+                printList()
             }
+        }
+    }
+
+    suspend fun printList() {
+        _uiState.asStateFlow().collectLatest {
+            println("buddha $it")
         }
     }
 }
