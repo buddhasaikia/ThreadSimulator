@@ -21,24 +21,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bs.threadsimulator.MainViewModel
 import com.bs.threadsimulator.R
-import com.bs.threadsimulator.UIState
 import com.bs.threadsimulator.data.MockDataSource
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 
 @Composable
-fun HomeScreenRoute(innerPadding: PaddingValues, mainViewModel: MainViewModel) {
+fun HomeScreenRoute(innerPadding: PaddingValues, mainViewModel: MainViewModel = hiltViewModel()) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-    HomeScreen(innerPadding, uiState)
+    when(uiState.companyList.isEmpty()) {
+        true -> {
+            println("buddha empty")
+        }
+        else -> {
+            println("buddha not empty")
+        }
+    }
+    HomeScreen(innerPadding, uiState.companyList)
 }
 
 @Composable
-fun HomeScreen(innerPadding: PaddingValues, uiState: UIState) {
+fun HomeScreen(innerPadding: PaddingValues, companyList: List<Company>) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
-        items(uiState.companyList) {
+        items(companyList) {
+            println("buddha HomeScreen ${it.stock}")
             CompanyItem(it)
             HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
         }
@@ -98,7 +107,7 @@ fun StockListPreview() {
     ThreadSimulatorTheme {
         HomeScreen(
             PaddingValues(2.dp),
-            uiState = UIState(MockDataSource().getCompanyList())
+            companyList = MockDataSource().getCompanyList()
         )
     }
 }

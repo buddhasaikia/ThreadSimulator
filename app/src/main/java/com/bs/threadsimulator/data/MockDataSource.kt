@@ -2,6 +2,7 @@ package com.bs.threadsimulator.data
 
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Stock
+import javax.inject.Inject
 
 object CompanyList {
     val companies = mutableListOf(
@@ -287,7 +288,7 @@ object CompanyList {
         )
     )
 }
-class MockDataSource {
+class MockDataSource @Inject constructor() {
     fun getCompanyList(): List<Company> {
         return CompanyList.companies.subList(0, 1)
     }

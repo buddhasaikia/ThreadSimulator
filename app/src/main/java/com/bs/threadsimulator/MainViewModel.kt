@@ -3,54 +3,65 @@ package com.bs.threadsimulator
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bs.threadsimulator.data.DataRepository
-import com.bs.threadsimulator.data.MockDataSource
-import com.bs.threadsimulator.domain.UpdateCurrentPriceUseCase
+import com.bs.threadsimulator.domain.FetchStockInfoUseCase
+import com.bs.threadsimulator.model.Resource
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
-    private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState())
-    val uiState: StateFlow<UIState> = _uiState.asStateFlow()
-    private val dataRepository = DataRepository()
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val dataRepository: DataRepository,
+    private val fetchStockInfoUseCase: FetchStockInfoUseCase
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(UIState())
+    val uiState = _uiState.asStateFlow()
 
     init {
         start()
     }
 
-    fun start() {
+    private fun start() {
         viewModelScope.launch {
             _uiState.update {
-                val companyList = MockDataSource().getCompanyList()
+                val companyList = dataRepository.getCompanyList()
                 it.copy(companyList = companyList)
             }
             startLiveTracking("AAPL")
         }
     }
 
-    fun startLiveTracking(symbol: String) {
-        viewModelScope.launch {
-            UpdateCurrentPriceUseCase(dataRepository).execute(symbol).collectLatest { resource ->
-                _uiState.update { state ->
-                    state.copy(companyList = state.companyList.map { company ->
-                        if (company.stock.symbol == resource.data?.symbol) {
-                            company.copy(stock = resource.data)
-                        } else {
-                            company
-                        }
-                    })
+    private suspend fun startLiveTracking(symbol: String) {
+        fetchStockInfoUseCase.execute(symbol).collect { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    println("buddha loading")
                 }
-                printList()
-            }
-        }
-    }
 
-    suspend fun printList() {
-        _uiState.asStateFlow().collectLatest {
-            println("buddha $it")
+                is Resource.Success -> {
+                    _uiState.update { state ->
+                        state.copy(companyList = state.companyList.map { company ->
+                            if (company.stock.symbol == resource.data?.symbol) {
+                                println("buddha match ${resource.data}")
+                                company.copy(stock = resource.data)
+                            } else {
+                                println("buddha unmatch ${resource.data}")
+                                company.copy()
+                            }
+                        })
+                    }
+                }
+
+                is Resource.Error -> {
+                    println("buddha error ${resource.message}")
+                }
+            }
+            //println("buddha uiState.value.companyList ${uiState.value.companyList}")
         }
     }
 }
