@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bs.threadsimulator.MainViewModel
@@ -32,14 +33,6 @@ import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 @Composable
 fun HomeScreenRoute(innerPadding: PaddingValues, mainViewModel: MainViewModel = hiltViewModel()) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-    when(uiState.companyList.isEmpty()) {
-        true -> {
-            println("buddha empty")
-        }
-        else -> {
-            println("buddha not empty")
-        }
-    }
     HomeScreen(innerPadding, uiState.companyList)
 }
 
@@ -47,7 +40,6 @@ fun HomeScreenRoute(innerPadding: PaddingValues, mainViewModel: MainViewModel = 
 fun HomeScreen(innerPadding: PaddingValues, companyList: List<Company>) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(companyList) {
-            println("buddha HomeScreen ${it.stock}")
             CompanyItem(it)
             HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
         }
@@ -84,7 +76,8 @@ fun CompanyItem(company: Company) {
             text = "Price: ${company.stock.currentPrice}",
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             fontWeight = FontWeight.Bold,
-            color = colorResource(R.color.teal_700)
+            fontSize = 22.sp,
+            color = colorResource(R.color.purple_200)
         )
         Row {
             Text(

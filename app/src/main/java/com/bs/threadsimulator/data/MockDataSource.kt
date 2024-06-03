@@ -290,12 +290,17 @@ object CompanyList {
 }
 class MockDataSource @Inject constructor() {
     fun getCompanyList(): List<Company> {
-        return CompanyList.companies.subList(0, 1)
+        return CompanyList.companies.subList(0, 2)
     }
 
     fun updateStock(stock: Stock) {
         CompanyList.companies.find { it.stock.symbol == stock.symbol }?.let {
             it.stock = stock
         }
+    }
+
+    fun updateCompany(company: Company) {
+        val index = CompanyList.companies.indexOfFirst { it.stock.symbol == company.stock.symbol }
+        CompanyList.companies[index] = company
     }
 }
