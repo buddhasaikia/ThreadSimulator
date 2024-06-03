@@ -290,7 +290,7 @@ object CompanyList {
 }
 class MockDataSource @Inject constructor() {
     fun getCompanyList(): List<Company> {
-        return CompanyList.companies.subList(0, 2)
+        return CompanyList.companies
     }
 
     fun updateStock(stock: Stock) {

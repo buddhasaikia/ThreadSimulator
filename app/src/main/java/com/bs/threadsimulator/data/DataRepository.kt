@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class DataRepository @Inject constructor(private val mockDataSource: MockDataSource) {
-    private val updateInterval = 2000L
+    private val updateIntervalPE = 2000L
+    private val updateIntervalHighLow = 1000L
+    private val updateIntervalCurrentPrice = 200L
 
     suspend fun fetchStockPE(symbol: String): Flow<Resource<Company>> {
         return flow {
@@ -18,7 +20,7 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
             while (true) {
                 val company = getCompany(symbol)
                 if (company != null) {
-                    delay(updateInterval)
+                    delay(updateIntervalPE)
                     val updatedCompany = company.copy(peRatio = "${company.peRatio.toDouble().plus(1.0)}")
                     mockDataSource.updateCompany(updatedCompany)
                     emit(Resource.Success(updatedCompany))
@@ -36,7 +38,7 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
             while (true) {
                 val stock = getStock(symbol)
                 if (stock != null) {
-                    delay(updateInterval)
+                    delay(updateIntervalCurrentPrice)
                     val updatedStock = stock.copy(currentPrice = stock.currentPrice + 1)
                     mockDataSource.updateStock(updatedStock)
                     emit(Resource.Success(updatedStock))
@@ -54,7 +56,7 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
             while (true) {
                 val stock = getStock(symbol)
                 if (stock != null) {
-                    delay(updateInterval)
+                    delay(updateIntervalHighLow)
                     val updatedStock = stock.copy(high = stock.high + 2, low = stock.low - 1)
                     mockDataSource.updateStock(updatedStock)
                     emit(Resource.Success(updatedStock))

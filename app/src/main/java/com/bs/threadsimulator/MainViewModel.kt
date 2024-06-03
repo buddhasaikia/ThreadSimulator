@@ -39,7 +39,18 @@ class MainViewModel @Inject constructor(
                 it.copy(companyList = companyList)
             }
         }
-        viewModelScope.launch(Dispatchers.IO) {
+        dataRepository.getCompanyList().forEach {
+            viewModelScope.launch(Dispatchers.IO) {
+                fetchCurrentPrice(it.stock.symbol)
+            }
+            viewModelScope.launch(Dispatchers.IO) {
+                fetchHighLow(it.stock.symbol)
+            }
+            viewModelScope.launch(Dispatchers.IO) {
+                fetchStockPE(it.stock.symbol)
+            }
+        }
+        /*viewModelScope.launch(Dispatchers.IO) {
             fetchCurrentPrice("AAPL")
         }
         viewModelScope.launch(Dispatchers.IO) {
@@ -56,7 +67,7 @@ class MainViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.IO) {
             fetchStockPE("AAPL")
-        }
+        }*/
     }
 
     private suspend fun fetchStockPE(symbol: String) {
