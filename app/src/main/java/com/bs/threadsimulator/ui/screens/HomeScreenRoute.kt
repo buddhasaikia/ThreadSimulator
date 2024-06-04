@@ -24,15 +24,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bs.threadsimulator.MainViewModel
 import com.bs.threadsimulator.R
 import com.bs.threadsimulator.data.MockDataSource
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 
 @Composable
-fun HomeScreenRoute(innerPadding: PaddingValues, mainViewModel: MainViewModel = hiltViewModel()) {
-    val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = hiltViewModel()) {
+    val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(innerPadding, uiState.companyList)
 }
 

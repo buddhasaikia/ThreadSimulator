@@ -1,4 +1,4 @@
-package com.bs.threadsimulator
+package com.bs.threadsimulator.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,7 +9,6 @@ import com.bs.threadsimulator.domain.FetchStockPEUseCase
 import com.bs.threadsimulator.model.Resource
 import com.bs.threadsimulator.model.StateError
 import com.bs.threadsimulator.model.Status
-import com.bs.threadsimulator.ui.screens.UIState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val dataRepository: DataRepository,
     private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
     private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
