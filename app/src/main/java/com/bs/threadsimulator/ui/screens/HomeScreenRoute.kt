@@ -84,55 +84,40 @@ fun HomeScreen(
             verticalAlignment = Alignment.Top
         ) {
             var peUpdateIntervalInMs by remember { mutableStateOf("1500") }
-            OutlinedTextField(
+            IntervalInput(
+                label = "PE (ms)",
                 value = peUpdateIntervalInMs,
-                label = { Text("PE (ms)", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 onValueChange = { value ->
                     peUpdateIntervalInMs = value
-                    if (value.isBlank()) return@OutlinedTextField
+                    if (value.isBlank()) return@IntervalInput
                     onSetUpdateInterval("PE", peUpdateIntervalInMs.trim().toLong())
                 },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                ),
                 modifier = Modifier
                     .width(110.dp)
                     .padding(start = 8.dp, end = 8.dp)
             )
             var currentPriceUpdateIntervalInMs by remember { mutableStateOf("1000") }
-            OutlinedTextField(
+            IntervalInput(
+                label = "Price (ms)",
                 value = currentPriceUpdateIntervalInMs,
-                label = { Text("Price (ms)", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 onValueChange = { value ->
                     currentPriceUpdateIntervalInMs = value
-                    if (value.isBlank()) return@OutlinedTextField
-                    onSetUpdateInterval(
-                        "current_price",
-                        currentPriceUpdateIntervalInMs.trim().toLong()
-                    )
+                    if (value.isBlank()) return@IntervalInput
+                    onSetUpdateInterval("current_price", currentPriceUpdateIntervalInMs.trim().toLong())
                 },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                ),
                 modifier = Modifier
                     .width(120.dp)
                     .padding(end = 8.dp)
             )
             var highLowUpdateIntervalInMs by remember { mutableStateOf("1000") }
-            OutlinedTextField(
+            IntervalInput(
+                label = "High/Low (ms)",
                 value = highLowUpdateIntervalInMs,
-                label = { Text("High/Low (ms)", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 onValueChange = { value ->
                     highLowUpdateIntervalInMs = value
-                    if (value.isBlank()) return@OutlinedTextField
+                    if (value.isBlank()) return@IntervalInput
                     onSetUpdateInterval("high_low", highLowUpdateIntervalInMs.trim().toLong())
                 },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
                 modifier = Modifier
                     .width(160.dp)
                     .padding(end = 8.dp)
@@ -232,6 +217,24 @@ fun CompanyItem(company: Company) {
             color = colorResource(R.color.yellow)
         )
     }
+}
+
+
+@Composable
+fun IntervalInput(label: String, value: String, onValueChange: (String) -> Unit, modifier: Modifier) {
+    OutlinedTextField(
+        value = value,
+        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        onValueChange = {
+            if (it.isBlank()) return@OutlinedTextField
+            onValueChange(it.trim())
+        },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Next
+        ),
+        modifier = modifier
+    )
 }
 
 @Preview(showBackground = true)

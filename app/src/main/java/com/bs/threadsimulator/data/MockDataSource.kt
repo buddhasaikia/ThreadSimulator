@@ -7,7 +7,7 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 object CompanyList {
-    val companies = mutableListOf(
+    private val companies = mutableListOf(
         Company(
             "Apple Inc.",
             1,
@@ -289,7 +289,7 @@ object CompanyList {
             )
         )
     )
-    private val _generatedCompanies: List<CompanyInfo> = MockDataSource().generateCompanies(2)
+    private val _generatedCompanies: List<CompanyInfo> = MockDataSource().generateCompanies(5)
     val generatedCompanies: List<CompanyInfo>
         get() = _generatedCompanies
 
