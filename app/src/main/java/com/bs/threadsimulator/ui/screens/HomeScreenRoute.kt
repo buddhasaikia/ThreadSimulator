@@ -42,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.bs.threadsimulator.R
 import com.bs.threadsimulator.data.MockDataSource
 import com.bs.threadsimulator.model.Company
+import com.bs.threadsimulator.model.toCompany
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 
 @Composable
@@ -82,7 +83,7 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Top
         ) {
-            var peUpdateIntervalInMs by remember { mutableStateOf("30") }
+            var peUpdateIntervalInMs by remember { mutableStateOf("1500") }
             OutlinedTextField(
                 value = peUpdateIntervalInMs,
                 label = { Text("PE (ms)", maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -99,7 +100,7 @@ fun HomeScreen(
                     .width(110.dp)
                     .padding(start = 8.dp, end = 8.dp)
             )
-            var currentPriceUpdateIntervalInMs by remember { mutableStateOf("50") }
+            var currentPriceUpdateIntervalInMs by remember { mutableStateOf("1000") }
             OutlinedTextField(
                 value = currentPriceUpdateIntervalInMs,
                 label = { Text("Price (ms)", maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -119,7 +120,7 @@ fun HomeScreen(
                     .width(120.dp)
                     .padding(end = 8.dp)
             )
-            var highLowUpdateIntervalInMs by remember { mutableStateOf("10") }
+            var highLowUpdateIntervalInMs by remember { mutableStateOf("1000") }
             OutlinedTextField(
                 value = highLowUpdateIntervalInMs,
                 label = { Text("High/Low (ms)", maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -239,7 +240,7 @@ fun StockListPreview() {
     ThreadSimulatorTheme {
         HomeScreen(
             PaddingValues(2.dp),
-            companyList = MockDataSource().getCompanyList(),
+            companyList = MockDataSource().getCompanyList().map { it.toCompany() },
             onSetUpdateInterval = { _, _ -> },
             onStart = {},
             onStop = {}

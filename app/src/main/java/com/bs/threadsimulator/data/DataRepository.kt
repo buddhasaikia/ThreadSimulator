@@ -3,18 +3,16 @@ package com.bs.threadsimulator.data
 import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
 import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
 import com.bs.threadsimulator.data.Constants.updateIntervalPE
-import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
-import com.bs.threadsimulator.model.Stock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 internal object Constants {
-    var updateIntervalPE = 30L
-    var updateIntervalHighLow = 50L
-    var updateIntervalCurrentPrice = 10L
+    var updateIntervalPE = 1500L
+    var updateIntervalHighLow = 1000L
+    var updateIntervalCurrentPrice = 1000L
 }
 
 class DataRepository @Inject constructor(private val mockDataSource: MockDataSource) {
@@ -32,16 +30,17 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
         updateIntervalCurrentPrice = interval
     }
 
-    suspend fun fetchStockPE(symbol: String): Flow<Resource<Company>> {
+    suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> {
         return flow {
             emit(Resource.Loading())
             delay(startDelay)
             while (true) {
-                val company = getCompany(symbol)
-                if (company != null) {
+                val companyInfo = getCompany(symbol)
+                if (companyInfo != null) {
                     delay(updateIntervalPE)
-                    company.peRatio = "${company.peRatio.toDouble().plus(1.0)}"
-                    emit(Resource.Success(company))
+                    companyInfo.peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}"
+                    companyInfo.threadName = Thread.currentThread().name
+                    emit(Resource.Success(companyInfo))
                 } else {
                     emit(Resource.Error(message = "Company not found"))
                 }
@@ -49,16 +48,17 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
         }
     }
 
-    suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<Stock>> {
+    suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> {
         return flow {
             emit(Resource.Loading())
             delay(startDelay)
             while (true) {
-                val stock = getStock(symbol)
-                if (stock != null) {
+                val companyInfo = getCompany(symbol)
+                if (companyInfo != null) {
                     delay(updateIntervalCurrentPrice)
-                    stock.currentPrice += 1
-                    emit(Resource.Success(stock))
+                    companyInfo.stock.currentPrice += 1
+                    companyInfo.threadName = Thread.currentThread().name
+                    emit(Resource.Success(companyInfo))
                 } else {
                     emit(Resource.Error(message = "Stock not found"))
                 }
@@ -66,17 +66,18 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
         }
     }
 
-    suspend fun fetchStockHighLow(symbol: String): Flow<Resource<Stock>> {
+    suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> {
         return flow {
             emit(Resource.Loading())
             delay(startDelay)
             while (true) {
-                val stock = getStock(symbol)
-                if (stock != null) {
+                val companyInfo = getCompany(symbol)
+                if (companyInfo != null) {
                     delay(updateIntervalHighLow)
-                    stock.high += 2
-                    stock.low -= 1
-                    emit(Resource.Success(stock))
+                    companyInfo.stock.high += 2
+                    companyInfo.stock.low -= 1
+                    companyInfo.threadName = Thread.currentThread().name
+                    emit(Resource.Success(companyInfo))
                 } else {
                     emit(Resource.Error(message = "Stock not found"))
                 }
@@ -84,15 +85,11 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
         }
     }
 
-    private fun getStock(symbol: String): Stock? {
-        return mockDataSource.getCompanyList().find { it.stock.symbol == symbol }?.stock
-    }
-
-    private fun getCompany(symbol: String): Company? {
+    private fun getCompany(symbol: String): CompanyInfo? {
         return mockDataSource.getCompanyList().find { it.stock.symbol == symbol }
     }
 
-    fun getCompanyList(): List<Company> {
+    fun getCompanyList(): List<CompanyInfo> {
         return mockDataSource.getCompanyList()
     }
 

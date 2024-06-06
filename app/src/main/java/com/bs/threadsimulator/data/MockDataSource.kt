@@ -289,13 +289,13 @@ object CompanyList {
             )
         )
     )
-    private val _generatedCompanies: List<Company> = MockDataSource().generateCompanies(3000)
-    val generatedCompanies: List<Company>
+    private val _generatedCompanies: List<CompanyInfo> = MockDataSource().generateCompanies(2)
+    val generatedCompanies: List<CompanyInfo>
         get() = _generatedCompanies
 
 }
 class MockDataSource @Inject constructor() {
-    private fun generateRandomCompany(index: Int): Company {
+    private fun generateRandomCompany(index: Int): CompanyInfo {
         val companyNames = listOf("Apple", "Microsoft", "Amazon", "Alphabet", "Facebook", "Tesla", "NVIDIA", "PayPal", "Intel", "Netflix",
             "Adobe", "Salesforce", "Cisco", "Oracle", "IBM", "Qualcomm", "Shopify", "Square", "Twitter", "Spotify")
         val symbols = listOf("AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "PYPL", "INTC", "NFLX",
@@ -315,12 +315,12 @@ class MockDataSource @Inject constructor() {
         val high = String.format(Locale.getDefault(),"%.2f", maxOf(openingPrice, closingPrice) * 1.05).toDouble()
         val currentPrice = String.format(Locale.getDefault(),"%.2f", Random.nextDouble(low, high)).toDouble()
 
-        return Company(
+        return CompanyInfo(
             companyName,
             categoryIndex,
             peRatio,
             previousClosingPrice,
-            Stock(
+            StockInfo(
                 symbol,
                 openingPrice,
                 closingPrice,
@@ -331,11 +331,11 @@ class MockDataSource @Inject constructor() {
         )
     }
 
-    fun generateCompanies(n: Int): List<Company> {
+    fun generateCompanies(n: Int): List<CompanyInfo> {
         return List(n) { generateRandomCompany(it + 1) }
     }
 
-    fun getCompanyList(): List<Company> {
+    fun getCompanyList(): List<CompanyInfo> {
         return CompanyList.generatedCompanies
     }
 }

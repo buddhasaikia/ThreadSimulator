@@ -10,6 +10,7 @@ import com.bs.threadsimulator.domain.FetchStockPEUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
+import com.bs.threadsimulator.model.toCompany
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +26,7 @@ class HomeViewModel @Inject constructor(
     private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase
 ) : ViewModel() {
     private val _companyList = mutableStateListOf<Company>().apply {
-        addAll(dataRepository.getCompanyList())
+        addAll(dataRepository.getCompanyList().map { it.toCompany() })
     }
     val companyList: List<Company>
         get() = _companyList
@@ -40,7 +41,7 @@ class HomeViewModel @Inject constructor(
 
     fun start() {
         dataRepository.getCompanyList().forEach {
-            jobs.add(viewModelScope.launch(Dispatchers.IO) {
+            jobs.add(viewModelScope.launch(Dispatchers.Default) {
                 fetchCurrentPrice(it.stock.symbol)
             })
             jobs.add(viewModelScope.launch(Dispatchers.IO) {
@@ -53,6 +54,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun stop() {
+        println("buddha Total jobs: ${jobs.count()}")
         jobs.forEach { it.cancel() }
     }
 
@@ -67,13 +69,13 @@ class HomeViewModel @Inject constructor(
                 is Resource.Success -> {
                     _companyList.find { it.stock.symbol == symbol }?.let {
                         it.peRatio = resource.data?.peRatio ?: ""
-                        it.threadName = Thread.currentThread().name
+                        it.threadName = resource.data?.threadName ?: ""
                     }
                 }
 
                 else -> {}
             }
-            println("buddha CurrentThread (PE ratio $symbol): ${Thread.currentThread().name}")
+            println("buddha CurrentThread (PE ratio $symbol): ${resource.data?.threadName ?: ""}")
         }
     }
 
@@ -82,14 +84,14 @@ class HomeViewModel @Inject constructor(
             when (resource) {
                 is Resource.Success -> {
                     _companyList.find { it.stock.symbol == symbol }?.let {
-                        it.stock.currentPrice = resource.data?.currentPrice ?: 0.0
-                        it.threadName = Thread.currentThread().name
+                        it.stock.currentPrice = resource.data?.stock?.currentPrice ?: 0.0
+                        it.threadName = resource.data?.threadName ?: ""
                     }
                 }
 
                 else -> {}
             }
-            println("buddha CurrentThread (current price $symbol): ${Thread.currentThread().name}")
+            println("buddha CurrentThread (current price $symbol): ${resource.data?.threadName ?: ""}")
         }
     }
 
@@ -98,15 +100,15 @@ class HomeViewModel @Inject constructor(
             when (resource) {
                 is Resource.Success -> {
                     _companyList.find { it.stock.symbol == symbol }?.let {
-                        it.stock.high = resource.data?.high ?: 0.0
-                        it.stock.low = resource.data?.low ?: 0.0
-                        it.threadName = Thread.currentThread().name
+                        it.stock.high = resource.data?.stock?.high ?: 0.0
+                        it.stock.low = resource.data?.stock?.low ?: 0.0
+                        it.threadName = resource.data?.threadName ?: ""
                     }
                 }
 
                 else -> {}
             }
-            println("buddha CurrentThread (high low $symbol): ${Thread.currentThread().name}")
+            println("buddha CurrentThread (high low $symbol): ${resource.data?.threadName ?: ""}")
         }
     }
 }
