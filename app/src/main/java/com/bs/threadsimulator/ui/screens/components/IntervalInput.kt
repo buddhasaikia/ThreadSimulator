@@ -15,7 +15,6 @@ fun IntervalInput(label: String, value: String, onValueChange: (String) -> Unit,
         value = value,
         label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         onValueChange = {
-            if (it.isBlank()) return@OutlinedTextField
             onValueChange(it.trim())
         },
         keyboardOptions = KeyboardOptions.Default.copy(

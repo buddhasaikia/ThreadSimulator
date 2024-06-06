@@ -133,8 +133,6 @@ fun HomeScreen(
                 value = listSize,
                 onValueChange = { value ->
                     listSize = value
-                    if (value.isBlank()) return@IntervalInput
-                    onSetUpdateInterval("list_size", listSize.trim().toLong())
                 },
                 modifier = Modifier
                     .padding(end = 10.dp)
