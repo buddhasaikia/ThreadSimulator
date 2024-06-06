@@ -2,7 +2,9 @@ package com.bs.threadsimulator.data
 
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Stock
+import java.util.Locale
 import javax.inject.Inject
+import kotlin.random.Random
 
 object CompanyList {
     val companies = mutableListOf(
@@ -287,20 +289,53 @@ object CompanyList {
             )
         )
     )
+    private val _generatedCompanies: List<Company> = MockDataSource().generateCompanies(3000)
+    val generatedCompanies: List<Company>
+        get() = _generatedCompanies
+
 }
 class MockDataSource @Inject constructor() {
+    private fun generateRandomCompany(index: Int): Company {
+        val companyNames = listOf("Apple", "Microsoft", "Amazon", "Alphabet", "Facebook", "Tesla", "NVIDIA", "PayPal", "Intel", "Netflix",
+            "Adobe", "Salesforce", "Cisco", "Oracle", "IBM", "Qualcomm", "Shopify", "Square", "Twitter", "Spotify")
+        val symbols = listOf("AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "PYPL", "INTC", "NFLX",
+            "ADBE", "CRM", "CSCO", "ORCL", "IBM", "QCOM", "SHOP", "SQ", "TWTR", "SPOT")
+        val categoryIndices = (1..4).toList()
+
+        val nameIndex = Random.nextInt(companyNames.size)
+        val companyName = companyNames[nameIndex] + " Inc."
+        val symbol = symbols[nameIndex] + index.toString().padStart(4, '0')
+        val categoryIndex = categoryIndices.random()
+        val peRatio = String.format(Locale.getDefault(),"%.2f", Random.nextDouble(10.0, 60.0))
+        val previousClosingPrice = Random.nextInt(50, 3500)
+
+        val openingPrice = Random.nextDouble(previousClosingPrice * 0.95, previousClosingPrice * 1.05)
+        val closingPrice = Random.nextDouble(openingPrice * 0.95, openingPrice * 1.05)
+        val low = String.format(Locale.getDefault(),"%.2f", minOf(openingPrice, closingPrice) * 0.95).toDouble()
+        val high = String.format(Locale.getDefault(),"%.2f", maxOf(openingPrice, closingPrice) * 1.05).toDouble()
+        val currentPrice = String.format(Locale.getDefault(),"%.2f", Random.nextDouble(low, high)).toDouble()
+
+        return Company(
+            companyName,
+            categoryIndex,
+            peRatio,
+            previousClosingPrice,
+            Stock(
+                symbol,
+                openingPrice,
+                closingPrice,
+                low,
+                high,
+                currentPrice
+            )
+        )
+    }
+
+    fun generateCompanies(n: Int): List<Company> {
+        return List(n) { generateRandomCompany(it + 1) }
+    }
+
     fun getCompanyList(): List<Company> {
-        return CompanyList.companies
-    }
-
-    fun updateStock(stock: Stock) {
-        CompanyList.companies.find { it.stock.symbol == stock.symbol }?.let {
-            it.stock = stock
-        }
-    }
-
-    fun updateCompany(company: Company) {
-        val index = CompanyList.companies.indexOfFirst { it.stock.symbol == company.stock.symbol }
-        CompanyList.companies[index] = company
+        return CompanyList.generatedCompanies
     }
 }

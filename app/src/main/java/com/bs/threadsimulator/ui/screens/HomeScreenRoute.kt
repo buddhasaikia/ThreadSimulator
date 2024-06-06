@@ -182,12 +182,20 @@ fun CompanyItem(company: Company) {
             defaultElevation = 6.dp
         )
     ) {
-        Text(
-            text = company.companyName,
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            textDecoration = TextDecoration.Underline
-        )
+        Row {
+            Text(
+                text = company.stock.symbol,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                textDecoration = TextDecoration.Underline
+            )
+            Text(
+                text = "(${company.companyName})",
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                textDecoration = TextDecoration.Underline
+            )
+        }
         Text(
             text = "PE: ${company.peRatio}",
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)

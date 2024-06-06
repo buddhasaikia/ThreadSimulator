@@ -22,17 +22,14 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
 
     fun setUpdateIntervalPE(interval: Long) {
         updateIntervalPE = interval
-        println("updateIntervalPE $updateIntervalPE")
     }
 
     fun setUpdateIntervalHighLow(interval: Long) {
         updateIntervalHighLow = interval
-        println("updateIntervalHighLow $updateIntervalHighLow")
     }
 
     fun setUpdateIntervalCurrentPrice(interval: Long) {
         updateIntervalCurrentPrice = interval
-        println("updateIntervalCurrentPrice $updateIntervalCurrentPrice")
     }
 
     suspend fun fetchStockPE(symbol: String): Flow<Resource<Company>> {
