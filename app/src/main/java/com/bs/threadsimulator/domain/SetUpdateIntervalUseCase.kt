@@ -9,6 +9,7 @@ class SetUpdateIntervalUseCase @Inject constructor(private val dataRepository: D
             "PE" -> dataRepository.setUpdateIntervalPE(interval)
             "current_price" -> dataRepository.setUpdateIntervalCurrentPrice(interval)
             "high_low" -> dataRepository.setUpdateIntervalHighLow(interval)
+            "list_size" -> dataRepository.setListSize(interval)
         }
     }
 }

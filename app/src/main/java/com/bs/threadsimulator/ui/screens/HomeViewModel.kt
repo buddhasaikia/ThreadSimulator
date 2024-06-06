@@ -7,6 +7,7 @@ import com.bs.threadsimulator.data.DataRepository
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
+import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
@@ -23,7 +24,8 @@ class HomeViewModel @Inject constructor(
     private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
     private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
     private val fetchStockPEUseCase: FetchStockPEUseCase,
-    private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase
+    private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
+    private val initCompanyListUseCase: InitCompanyListUseCase
 ) : ViewModel() {
     private val _companyList = mutableStateListOf<Company>().apply {
         addAll(dataRepository.getCompanyList().map { it.toCompany() })
@@ -32,6 +34,14 @@ class HomeViewModel @Inject constructor(
         get() = _companyList
 
     private val jobs = mutableListOf<Job>()
+
+    fun populateList(listSize: Int) {
+        viewModelScope.launch {
+            initCompanyListUseCase.execute(listSize)
+            _companyList.clear()
+            _companyList.addAll(dataRepository.getCompanyList().map { it.toCompany() })
+        }
+    }
 
     fun setUpdateInterval(name: String, interval: Long) {
         viewModelScope.launch(Dispatchers.IO) {

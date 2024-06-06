@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.data
 
+import com.bs.threadsimulator.data.Constants.listSize
 import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
 import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
 import com.bs.threadsimulator.data.Constants.updateIntervalPE
@@ -13,6 +14,7 @@ internal object Constants {
     var updateIntervalPE = 1500L
     var updateIntervalHighLow = 1000L
     var updateIntervalCurrentPrice = 1000L
+    var listSize = 5L
 }
 
 class DataRepository @Inject constructor(private val mockDataSource: MockDataSource) {
@@ -28,6 +30,10 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
 
     fun setUpdateIntervalCurrentPrice(interval: Long) {
         updateIntervalCurrentPrice = interval
+    }
+
+    fun setListSize(interval: Long) {
+        listSize = interval
     }
 
     suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> {
