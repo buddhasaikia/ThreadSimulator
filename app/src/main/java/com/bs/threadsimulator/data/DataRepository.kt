@@ -1,5 +1,8 @@
 package com.bs.threadsimulator.data
 
+import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
+import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
+import com.bs.threadsimulator.data.Constants.updateIntervalPE
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
 import com.bs.threadsimulator.model.Stock
@@ -8,11 +11,29 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
+internal object Constants {
+    var updateIntervalPE = 30L
+    var updateIntervalHighLow = 50L
+    var updateIntervalCurrentPrice = 10L
+}
+
 class DataRepository @Inject constructor(private val mockDataSource: MockDataSource) {
     private val startDelay = 0L
-    private val updateIntervalPE = 30L
-    private val updateIntervalHighLow = 50L
-    private val updateIntervalCurrentPrice = 10L
+
+    fun setUpdateIntervalPE(interval: Long) {
+        updateIntervalPE = interval
+        println("updateIntervalPE $updateIntervalPE")
+    }
+
+    fun setUpdateIntervalHighLow(interval: Long) {
+        updateIntervalHighLow = interval
+        println("updateIntervalHighLow $updateIntervalHighLow")
+    }
+
+    fun setUpdateIntervalCurrentPrice(interval: Long) {
+        updateIntervalCurrentPrice = interval
+        println("updateIntervalCurrentPrice $updateIntervalCurrentPrice")
+    }
 
     suspend fun fetchStockPE(symbol: String): Flow<Resource<Company>> {
         return flow {

@@ -7,6 +7,7 @@ import com.bs.threadsimulator.data.DataRepository
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
+import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +21,8 @@ class HomeViewModel @Inject constructor(
     private val dataRepository: DataRepository,
     private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
     private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
-    private val fetchStockPEUseCase: FetchStockPEUseCase
+    private val fetchStockPEUseCase: FetchStockPEUseCase,
+    private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase
 ) : ViewModel() {
     private val _companyList = mutableStateListOf<Company>().apply {
         addAll(dataRepository.getCompanyList())
@@ -29,6 +31,12 @@ class HomeViewModel @Inject constructor(
         get() = _companyList
 
     private val jobs = mutableListOf<Job>()
+
+    fun setUpdateInterval(name: String, interval: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            setUpdateIntervalUseCase.execute(name, interval)
+        }
+    }
 
     fun start() {
         dataRepository.getCompanyList().forEach {
@@ -44,7 +52,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun stop(){
+    fun stop() {
         jobs.forEach { it.cancel() }
     }
 
@@ -96,7 +104,7 @@ class HomeViewModel @Inject constructor(
                     }
                 }
 
-                else->{}
+                else -> {}
             }
             println("buddha CurrentThread (high low $symbol): ${Thread.currentThread().name}")
         }
