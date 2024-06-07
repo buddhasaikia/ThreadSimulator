@@ -3,6 +3,7 @@ package com.bs.threadsimulator.ui.screens
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bs.threadsimulator.data.CompanyInfo
 import com.bs.threadsimulator.data.DataRepository
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
@@ -15,8 +16,10 @@ import com.bs.threadsimulator.model.toCompany
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,8 +36,20 @@ class HomeViewModel @Inject constructor(
     }
     val companyList: List<Company>
         get() = _companyList
-
     private val jobs = mutableListOf<Job>()
+    private val channel = Channel<CompanyInfo>(
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        capacity = 15000,
+        onUndeliveredElement = {
+            println("Undelivered: $it")
+        }
+    )
+
+    fun setUpdateInterval(name: String, interval: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            setUpdateIntervalUseCase.execute(name, interval)
+        }
+    }
 
     fun populateList(listSize: Int) {
         viewModelScope.launch {
@@ -44,48 +59,29 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun setUpdateInterval(name: String, interval: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            setUpdateIntervalUseCase.execute(name, interval)
-        }
-    }
-
     fun start() {
-        dataRepository.getCompanyList().forEach {
-            jobs.add(viewModelScope.launch(Dispatchers.IO) {
-                fetchCurrentPrice(it.stock.symbol)
-            })
-            jobs.add(viewModelScope.launch(Dispatchers.IO) {
-                fetchHighLow(it.stock.symbol)
-            })
-            jobs.add(viewModelScope.launch(Dispatchers.IO) {
-                fetchStockPE(it.stock.symbol)
-            })
+        viewModelScope.launch {
+            processChannel(channel)
+            dataRepository.getCompanyList().forEach {
+                jobs.add(viewModelScope.launch(Dispatchers.IO) {
+                    fetchCurrentPrice(it.stock.symbol)
+                })
+                jobs.add(viewModelScope.launch(Dispatchers.IO) {
+                    fetchHighLow(it.stock.symbol)
+                })
+                jobs.add(viewModelScope.launch(Dispatchers.IO) {
+                    fetchStockPE(it.stock.symbol)
+                })
+            }
         }
-    }
-
-    fun stop() {
-        println("buddha Total jobs: ${jobs.count()}")
-        jobs.forEach { it.cancel() }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        stop()
     }
 
     private suspend fun fetchStockPE(symbol: String) {
         fetchStockPEUseCase.execute(symbol).collect { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    withContext(Dispatchers.Main) {
-                        if (resource.data == null) return@withContext
-                        val company = _companyList[resource.data.id]
-                        with(company) {
-                            peRatio = resource.data.peRatio
-                            threadName = resource.data.threadName
-                        }
-                    }
+                    if (resource.data == null) return@collect
+                    channel.send(resource.data)
                 }
 
                 else -> {}
@@ -98,14 +94,8 @@ class HomeViewModel @Inject constructor(
         fetchStockCurrentPriceUseCase.execute(symbol).collect { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    withContext(Dispatchers.Main) {
-                        if (resource.data == null) return@withContext
-                        val company = _companyList[resource.data.id]
-                        with(company) {
-                            stock.currentPrice = resource.data.stock.currentPrice
-                            threadName = resource.data.threadName
-                        }
-                    }
+                    if (resource.data == null) return@collect
+                    channel.send(resource.data)
                 }
 
                 else -> {}
@@ -118,20 +108,40 @@ class HomeViewModel @Inject constructor(
         fetchStockHighLowUseCase.execute(symbol).collect { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    withContext(Dispatchers.Main) {
-                        if (resource.data == null) return@withContext
-                        val company = _companyList[resource.data.id]
-                        with(company) {
-                            stock.high = resource.data.stock.high
-                            stock.low = resource.data.stock.low
-                            threadName = resource.data.threadName
-                        }
-                    }
+                    if (resource.data == null) return@collect
+                    channel.send(resource.data)
                 }
 
                 else -> {}
             }
             println("buddha CurrentThread (high low $symbol): ${resource.data?.threadName ?: ""}")
         }
+    }
+
+    private fun processChannel(channel: ReceiveChannel<CompanyInfo>) {
+        viewModelScope.launch(Dispatchers.Main) {
+            for (companyInfo in channel) {
+                val company = _companyList[companyInfo.id]
+                with(company) {
+                    threadName = companyInfo.threadName
+                    peRatio = companyInfo.peRatio
+                    stock.currentPrice = companyInfo.stock.currentPrice
+                    stock.high = companyInfo.stock.high
+                    stock.low = companyInfo.stock.low
+                    threadName = companyInfo.threadName
+                }
+            }
+        }
+    }
+
+    fun stop() {
+        println("buddha Total jobs: ${jobs.count()}")
+        jobs.forEach { it.cancel() }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stop()
+        channel.close()
     }
 }

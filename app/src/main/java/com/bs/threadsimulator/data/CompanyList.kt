@@ -295,6 +295,7 @@ object CompanyList {
     suspend fun initCompanyList(listSize: Int) {
         withContext(Dispatchers.IO) {
             _generatedCompanies = MockDataSource().generateCompanies(listSize)
+            //_generatedCompanies = CopyOnWriteArrayList(MockDataSource().generateCompanies(listSize))
         }
     }
 }
