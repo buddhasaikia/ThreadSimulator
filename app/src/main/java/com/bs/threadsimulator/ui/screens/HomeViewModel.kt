@@ -16,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,7 +52,7 @@ class HomeViewModel @Inject constructor(
 
     fun start() {
         dataRepository.getCompanyList().forEach {
-            jobs.add(viewModelScope.launch(Dispatchers.Default) {
+            jobs.add(viewModelScope.launch(Dispatchers.IO) {
                 fetchCurrentPrice(it.stock.symbol)
             })
             jobs.add(viewModelScope.launch(Dispatchers.IO) {
@@ -77,9 +78,13 @@ class HomeViewModel @Inject constructor(
         fetchStockPEUseCase.execute(symbol).collect { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    _companyList.find { it.stock.symbol == symbol }?.let {
-                        it.peRatio = resource.data?.peRatio ?: ""
-                        it.threadName = resource.data?.threadName ?: ""
+                    withContext(Dispatchers.Main) {
+                        if (resource.data == null) return@withContext
+                        val company = _companyList[resource.data.id]
+                        with(company) {
+                            peRatio = resource.data.peRatio
+                            threadName = resource.data.threadName
+                        }
                     }
                 }
 
@@ -93,9 +98,13 @@ class HomeViewModel @Inject constructor(
         fetchStockCurrentPriceUseCase.execute(symbol).collect { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    _companyList.find { it.stock.symbol == symbol }?.let {
-                        it.stock.currentPrice = resource.data?.stock?.currentPrice ?: 0.0
-                        it.threadName = resource.data?.threadName ?: ""
+                    withContext(Dispatchers.Main) {
+                        if (resource.data == null) return@withContext
+                        val company = _companyList[resource.data.id]
+                        with(company) {
+                            stock.currentPrice = resource.data.stock.currentPrice
+                            threadName = resource.data.threadName
+                        }
                     }
                 }
 
@@ -109,10 +118,14 @@ class HomeViewModel @Inject constructor(
         fetchStockHighLowUseCase.execute(symbol).collect { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    _companyList.find { it.stock.symbol == symbol }?.let {
-                        it.stock.high = resource.data?.stock?.high ?: 0.0
-                        it.stock.low = resource.data?.stock?.low ?: 0.0
-                        it.threadName = resource.data?.threadName ?: ""
+                    withContext(Dispatchers.Main) {
+                        if (resource.data == null) return@withContext
+                        val company = _companyList[resource.data.id]
+                        with(company) {
+                            stock.high = resource.data.stock.high
+                            stock.low = resource.data.stock.low
+                            threadName = resource.data.threadName
+                        }
                     }
                 }
 

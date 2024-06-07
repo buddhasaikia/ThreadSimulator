@@ -1,7 +1,5 @@
 package com.bs.threadsimulator.data
 
-import com.bs.threadsimulator.model.Company
-import com.bs.threadsimulator.model.Stock
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.random.Random
@@ -28,6 +26,7 @@ class MockDataSource @Inject constructor() {
         val currentPrice = String.format(Locale.getDefault(),"%.2f", Random.nextDouble(low, high)).toDouble()
 
         return CompanyInfo(
+            index,
             companyName,
             categoryIndex,
             peRatio,
@@ -44,7 +43,7 @@ class MockDataSource @Inject constructor() {
     }
 
     fun generateCompanies(n: Int): List<CompanyInfo> {
-        return List(n) { generateRandomCompany(it + 1) }
+        return List(n) { generateRandomCompany(it) }
     }
 
     fun getCompanyList(): List<CompanyInfo> {

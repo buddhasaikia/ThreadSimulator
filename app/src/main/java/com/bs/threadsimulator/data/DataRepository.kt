@@ -41,9 +41,10 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
             emit(Resource.Loading())
             delay(startDelay)
             while (true) {
-                val companyInfo = getCompany(symbol)
-                if (companyInfo != null) {
+                val index = getCompanyIndex(symbol)
+                if (index >= 0) {
                     delay(updateIntervalPE)
+                    val companyInfo = mockDataSource.getCompanyList()[index]
                     companyInfo.peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}"
                     companyInfo.threadName = Thread.currentThread().name
                     emit(Resource.Success(companyInfo))
@@ -59,9 +60,10 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
             emit(Resource.Loading())
             delay(startDelay)
             while (true) {
-                val companyInfo = getCompany(symbol)
-                if (companyInfo != null) {
+                val index = getCompanyIndex(symbol)
+                if (index >= 0) {
                     delay(updateIntervalCurrentPrice)
+                    val companyInfo = mockDataSource.getCompanyList()[index]
                     companyInfo.stock.currentPrice += 1
                     companyInfo.threadName = Thread.currentThread().name
                     emit(Resource.Success(companyInfo))
@@ -77,9 +79,10 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
             emit(Resource.Loading())
             delay(startDelay)
             while (true) {
-                val companyInfo = getCompany(symbol)
-                if (companyInfo != null) {
+                val index = getCompanyIndex(symbol)
+                if (index >= 0) {
                     delay(updateIntervalHighLow)
+                    val companyInfo = mockDataSource.getCompanyList()[index]
                     companyInfo.stock.high += 2
                     companyInfo.stock.low -= 1
                     companyInfo.threadName = Thread.currentThread().name
@@ -91,8 +94,8 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
         }
     }
 
-    private fun getCompany(symbol: String): CompanyInfo? {
-        return mockDataSource.getCompanyList().find { it.stock.symbol == symbol }
+    private fun getCompanyIndex(symbol: String): Int {
+        return mockDataSource.getCompanyList().indexOfFirst { it.stock.symbol == symbol }
     }
 
     fun getCompanyList(): List<CompanyInfo> {
