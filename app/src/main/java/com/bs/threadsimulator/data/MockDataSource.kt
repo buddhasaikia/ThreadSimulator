@@ -1,5 +1,7 @@
 package com.bs.threadsimulator.data
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.random.Random
@@ -33,11 +35,11 @@ class MockDataSource @Inject constructor() {
             previousClosingPrice,
             StockInfo(
                 symbol,
-                openingPrice,
-                closingPrice,
-                low,
-                high,
-                currentPrice
+                BigDecimal(openingPrice).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(closingPrice).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(low).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(high).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal(currentPrice).setScale(2, RoundingMode.HALF_UP)
             )
         )
     }

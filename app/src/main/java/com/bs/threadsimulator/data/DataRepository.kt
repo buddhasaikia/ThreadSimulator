@@ -8,6 +8,8 @@ import com.bs.threadsimulator.model.Resource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 
 internal object Constants {
@@ -64,7 +66,11 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
                 if (index >= 0) {
                     delay(updateIntervalCurrentPrice)
                     val companyInfo = mockDataSource.getCompanyList()[index]
-                    companyInfo.stock.currentPrice += 1
+                    companyInfo.stock.currentPrice =
+                        (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                        )
                     companyInfo.threadName = Thread.currentThread().name
                     emit(Resource.Success(companyInfo))
                 } else {
@@ -83,8 +89,14 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
                 if (index >= 0) {
                     delay(updateIntervalHighLow)
                     val companyInfo = mockDataSource.getCompanyList()[index]
-                    companyInfo.stock.high += 2
-                    companyInfo.stock.low -= 1
+                    companyInfo.stock.high = (companyInfo.stock.high + BigDecimal(2.0)).setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                    )
+                    companyInfo.stock.low = (companyInfo.stock.low + BigDecimal(1.0)).setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                    )
                     companyInfo.threadName = Thread.currentThread().name
                     emit(Resource.Success(companyInfo))
                 } else {
