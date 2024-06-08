@@ -60,8 +60,8 @@ class HomeViewModel @Inject constructor(
     }
 
     fun start() {
+        initChannel(channel)
         viewModelScope.launch {
-            processChannel(channel)
             dataRepository.getCompanyList().forEach {
                 jobs.add(viewModelScope.launch(Dispatchers.IO) {
                     fetchCurrentPrice(it.stock.symbol)
@@ -118,7 +118,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun processChannel(channel: ReceiveChannel<CompanyInfo>) {
+    private fun initChannel(channel: ReceiveChannel<CompanyInfo>) {
         viewModelScope.launch(Dispatchers.Main) {
             for (companyInfo in channel) {
                 val company = _companyList[companyInfo.id]
