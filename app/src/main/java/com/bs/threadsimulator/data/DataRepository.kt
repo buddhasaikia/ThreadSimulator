@@ -8,6 +8,7 @@ import com.bs.threadsimulator.data.Constants.updateIntervalPE
 import com.bs.threadsimulator.model.Resource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
@@ -60,6 +61,8 @@ class DataRepository @Inject constructor(
                         emit(Resource.Error(message = "Company not found"))
                     }
                 }
+            }.catch {
+                emit(Resource.Error(message = it.message ?: ""))
             }
         }
     }
