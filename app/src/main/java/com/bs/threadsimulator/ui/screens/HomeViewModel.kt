@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.ui.screens
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -41,12 +42,12 @@ class HomeViewModel @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
         capacity = 15000,
         onUndeliveredElement = {
-            println("Undelivered: $it")
+            Log.i("ThreadSimulator", "Undelivered: $it")
         }
     )
 
     fun setUpdateInterval(name: String, interval: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             setUpdateIntervalUseCase.execute(name, interval)
         }
     }
@@ -61,61 +62,56 @@ class HomeViewModel @Inject constructor(
 
     fun start() {
         initChannel(channel)
-        viewModelScope.launch {
-            dataRepository.getCompanyList().forEach {
-                jobs.add(viewModelScope.launch(Dispatchers.IO) {
-                    fetchCurrentPrice(it.stock.symbol)
-                })
-                jobs.add(viewModelScope.launch(Dispatchers.IO) {
-                    fetchHighLow(it.stock.symbol)
-                })
-                jobs.add(viewModelScope.launch(Dispatchers.IO) {
-                    fetchStockPE(it.stock.symbol)
-                })
-            }
+        dataRepository.getCompanyList().forEach {
+            fetchCurrentPrice(it.stock.symbol)
+            fetchHighLow(it.stock.symbol)
+            fetchStockPE(it.stock.symbol)
         }
     }
 
-    private suspend fun fetchStockPE(symbol: String) {
-        fetchStockPEUseCase.execute(symbol).collect { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    if (resource.data == null) return@collect
-                    channel.send(resource.data)
-                }
+    private fun fetchStockPE(symbol: String) {
+        jobs.add(viewModelScope.launch(Dispatchers.IO) {
+            fetchStockPEUseCase.execute(symbol).collect { resource ->
+                when (resource) {
+                    is Resource.Success -> {
+                        if (resource.data == null) return@collect
+                        channel.send(resource.data)
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
-            println("buddha CurrentThread (PE ratio $symbol): ${resource.data?.threadName ?: ""}")
-        }
+        })
     }
 
-    private suspend fun fetchCurrentPrice(symbol: String) {
-        fetchStockCurrentPriceUseCase.execute(symbol).collect { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    if (resource.data == null) return@collect
-                    channel.send(resource.data)
-                }
+    private fun fetchCurrentPrice(symbol: String) {
+        jobs.add(viewModelScope.launch(Dispatchers.IO) {
+            fetchStockCurrentPriceUseCase.execute(symbol).collect { resource ->
+                when (resource) {
+                    is Resource.Success -> {
+                        if (resource.data == null) return@collect
+                        channel.send(resource.data)
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
-            println("buddha CurrentThread (current price $symbol): ${resource.data?.threadName ?: ""}")
-        }
+        })
     }
 
-    private suspend fun fetchHighLow(symbol: String) {
-        fetchStockHighLowUseCase.execute(symbol).collect { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    if (resource.data == null) return@collect
-                    channel.send(resource.data)
-                }
+    private fun fetchHighLow(symbol: String) {
+        jobs.add(viewModelScope.launch(Dispatchers.IO) {
+            fetchStockHighLowUseCase.execute(symbol).collect { resource ->
+                when (resource) {
+                    is Resource.Success -> {
+                        if (resource.data == null) return@collect
+                        channel.send(resource.data)
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
-            println("buddha CurrentThread (high low $symbol): ${resource.data?.threadName ?: ""}")
-        }
+        })
     }
 
     private fun initChannel(channel: ReceiveChannel<CompanyInfo>) {
@@ -135,7 +131,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun stop() {
-        println("buddha Total jobs: ${jobs.count()}")
+        Log.i("ThreadSimulator", "Total jobs: ${jobs.count()}")
         jobs.forEach { it.cancel() }
     }
 

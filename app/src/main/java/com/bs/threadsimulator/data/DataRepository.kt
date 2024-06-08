@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.data
 
+import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.data.Constants.listSize
 import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
 import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
@@ -8,6 +9,7 @@ import com.bs.threadsimulator.model.Resource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
@@ -19,7 +21,10 @@ internal object Constants {
     var listSize = 5L
 }
 
-class DataRepository @Inject constructor(private val mockDataSource: MockDataSource) {
+class DataRepository @Inject constructor(
+    private val mockDataSource: MockDataSource,
+    private val appDispatchers: AppDispatchers
+) {
     private val startDelay = 0L
 
     fun setUpdateIntervalPE(interval: Long) {
@@ -39,68 +44,75 @@ class DataRepository @Inject constructor(private val mockDataSource: MockDataSou
     }
 
     suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> {
-        return flow {
-            emit(Resource.Loading())
-            delay(startDelay)
-            while (true) {
-                val index = getCompanyIndex(symbol)
-                if (index >= 0) {
-                    delay(updateIntervalPE)
-                    val companyInfo = mockDataSource.getCompanyList()[index]
-                    companyInfo.peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}"
-                    companyInfo.threadName = Thread.currentThread().name
-                    emit(Resource.Success(companyInfo))
-                } else {
-                    emit(Resource.Error(message = "Company not found"))
+        return withContext(appDispatchers.ioDispatcher) {
+            flow {
+                emit(Resource.Loading())
+                delay(startDelay)
+                while (true) {
+                    val index = getCompanyIndex(symbol)
+                    if (index >= 0) {
+                        delay(updateIntervalPE)
+                        val companyInfo = mockDataSource.getCompanyList()[index]
+                        companyInfo.peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}"
+                        companyInfo.threadName = Thread.currentThread().name
+                        emit(Resource.Success(companyInfo))
+                    } else {
+                        emit(Resource.Error(message = "Company not found"))
+                    }
                 }
             }
         }
     }
 
     suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> {
-        return flow {
-            emit(Resource.Loading())
-            delay(startDelay)
-            while (true) {
-                val index = getCompanyIndex(symbol)
-                if (index >= 0) {
-                    delay(updateIntervalCurrentPrice)
-                    val companyInfo = mockDataSource.getCompanyList()[index]
-                    companyInfo.stock.currentPrice =
-                        (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
-                            2,
-                            RoundingMode.HALF_UP
-                        )
-                    companyInfo.threadName = Thread.currentThread().name
-                    emit(Resource.Success(companyInfo))
-                } else {
-                    emit(Resource.Error(message = "Stock not found"))
+        return withContext(appDispatchers.ioDispatcher) {
+            flow {
+                emit(Resource.Loading())
+                delay(startDelay)
+                while (true) {
+                    val index = getCompanyIndex(symbol)
+                    if (index >= 0) {
+                        delay(updateIntervalCurrentPrice)
+                        val companyInfo = mockDataSource.getCompanyList()[index]
+                        companyInfo.stock.currentPrice =
+                            (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
+                                2,
+                                RoundingMode.HALF_UP
+                            )
+                        companyInfo.threadName = Thread.currentThread().name
+                        emit(Resource.Success(companyInfo))
+                    } else {
+                        emit(Resource.Error(message = "Stock not found"))
+                    }
                 }
             }
         }
     }
 
     suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> {
-        return flow {
-            emit(Resource.Loading())
-            delay(startDelay)
-            while (true) {
-                val index = getCompanyIndex(symbol)
-                if (index >= 0) {
-                    delay(updateIntervalHighLow)
-                    val companyInfo = mockDataSource.getCompanyList()[index]
-                    companyInfo.stock.high = (companyInfo.stock.high + BigDecimal(2.0)).setScale(
-                        2,
-                        RoundingMode.HALF_UP
-                    )
-                    companyInfo.stock.low = (companyInfo.stock.low + BigDecimal(1.0)).setScale(
-                        2,
-                        RoundingMode.HALF_UP
-                    )
-                    companyInfo.threadName = Thread.currentThread().name
-                    emit(Resource.Success(companyInfo))
-                } else {
-                    emit(Resource.Error(message = "Stock not found"))
+        return withContext(appDispatchers.ioDispatcher) {
+            flow {
+                emit(Resource.Loading())
+                delay(startDelay)
+                while (true) {
+                    val index = getCompanyIndex(symbol)
+                    if (index >= 0) {
+                        delay(updateIntervalHighLow)
+                        val companyInfo = mockDataSource.getCompanyList()[index]
+                        companyInfo.stock.high =
+                            (companyInfo.stock.high + BigDecimal(2.0)).setScale(
+                                2,
+                                RoundingMode.HALF_UP
+                            )
+                        companyInfo.stock.low = (companyInfo.stock.low + BigDecimal(1.0)).setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                        )
+                        companyInfo.threadName = Thread.currentThread().name
+                        emit(Resource.Success(companyInfo))
+                    } else {
+                        emit(Resource.Error(message = "Stock not found"))
+                    }
                 }
             }
         }
