@@ -56,6 +56,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_twitter) - your_email@example.com
+Buddha Saikia - [@bsaikia2860](https://x.com/BSaikia2860) - bsaikia.dev@gmail.com
 
 Project Link: [https://github.com/buddhasaikia/ThreadSimulator](https://github.com/buddhasaikia/ThreadSimulator)
