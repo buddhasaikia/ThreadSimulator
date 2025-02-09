@@ -1,6 +1,7 @@
 package com.bs.threadsimulator.data
 
 import com.bs.threadsimulator.common.AppDispatchers
+import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.data.Constants.listSize
 import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
 import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
@@ -10,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -24,7 +26,8 @@ internal object Constants {
 
 class DataRepository @Inject constructor(
     private val mockDataSource: MockDataSource,
-    private val appDispatchers: AppDispatchers
+    private val appDispatchers: AppDispatchers,
+    private val threadMonitor: ThreadMonitor
 ) {
     private val startDelay = 0L
 
@@ -50,12 +53,18 @@ class DataRepository @Inject constructor(
                 emit(Resource.Loading())
                 delay(startDelay)
                 while (true) {
+                    val startTime = System.nanoTime()
                     val index = getCompanyIndex(symbol)
                     if (index >= 0) {
                         delay(updateIntervalPE)
                         val companyInfo = mockDataSource.getCompanyList()[index]
-                        companyInfo.peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}"
-                        companyInfo.threadName = Thread.currentThread().name
+                        companyInfo.apply {
+                            peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}"
+                            threadName = Thread.currentThread().name
+                        }
+                        val updateTime =
+                            (System.nanoTime() - startTime) / 1_000_000 // Convert to ms
+                        threadMonitor.recordUpdate("PE", updateTime)
                         emit(Resource.Success(companyInfo))
                     } else {
                         emit(Resource.Error(message = "Company not found"))
@@ -63,7 +72,7 @@ class DataRepository @Inject constructor(
                 }
             }.catch {
                 emit(Resource.Error(message = it.message ?: ""))
-            }
+            }.flowOn(appDispatchers.ioDispatcher)
         }
     }
 
@@ -88,7 +97,7 @@ class DataRepository @Inject constructor(
                         emit(Resource.Error(message = "Stock not found"))
                     }
                 }
-            }
+            }.flowOn(appDispatchers.ioDispatcher)
         }
     }
 

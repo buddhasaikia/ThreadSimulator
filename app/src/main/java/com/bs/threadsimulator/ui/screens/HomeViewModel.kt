@@ -4,6 +4,10 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bs.threadsimulator.common.ThreadMetrics
+import com.bs.threadsimulator.common.ThreadMonitor
+import com.bs.threadsimulator.common.ThrottleStrategy
+import com.bs.threadsimulator.common.throttleUpdates
 import com.bs.threadsimulator.data.CompanyInfo
 import com.bs.threadsimulator.data.DataRepository
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
@@ -20,18 +24,23 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val dataRepository: DataRepository,
+    threadMonitor: ThreadMonitor,
     private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
     private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
     private val fetchStockPEUseCase: FetchStockPEUseCase,
     private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
     private val initCompanyListUseCase: InitCompanyListUseCase
 ) : ViewModel() {
+    // Add StateFlow for thread metrics
+    val threadMetrics: StateFlow<List<ThreadMetrics>> = threadMonitor.metrics
+    private var currentThrottleStrategy = ThrottleStrategy.NORMAL
     private val _companyList = mutableStateListOf<Company>().apply {
         addAll(dataRepository.getCompanyList().map { it.toCompany() })
     }
@@ -46,6 +55,23 @@ class HomeViewModel @Inject constructor(
         }
     )
 
+    // Automatically adjust based on list size
+    private fun adjustThrottlingForListSize(listSize: Int) {
+        val throttleMs = when {
+            listSize > 100 -> ThrottleStrategy.RELAXED
+            listSize > 50 -> ThrottleStrategy.NORMAL
+            else -> ThrottleStrategy.RAPID
+        }
+        setUpdateThrottling(throttleMs)
+    }
+
+    private fun setUpdateThrottling(strategy: Long) {
+        currentThrottleStrategy = strategy
+        // Restart data collection with new throttling
+        stop()
+        start()
+    }
+
     fun setUpdateInterval(name: String, interval: Long) {
         viewModelScope.launch {
             setUpdateIntervalUseCase.execute(name, interval)
@@ -54,6 +80,7 @@ class HomeViewModel @Inject constructor(
 
     fun populateList(listSize: Int) {
         viewModelScope.launch {
+            adjustThrottlingForListSize(listSize)
             initCompanyListUseCase.execute(listSize)
             _companyList.clear()
             _companyList.addAll(dataRepository.getCompanyList().map { it.toCompany() })
@@ -86,16 +113,18 @@ class HomeViewModel @Inject constructor(
 
     private fun fetchCurrentPrice(symbol: String) {
         jobs.add(viewModelScope.launch(Dispatchers.IO) {
-            fetchStockCurrentPriceUseCase.execute(symbol).collect { resource ->
-                when (resource) {
-                    is Resource.Success -> {
-                        if (resource.data == null) return@collect
-                        channel.send(resource.data)
-                    }
+            fetchStockCurrentPriceUseCase.execute(symbol)
+                .throttleUpdates(currentThrottleStrategy)
+                .collect { resource ->
+                    when (resource) {
+                        is Resource.Success -> {
+                            if (resource.data == null) return@collect
+                            channel.send(resource.data)
+                        }
 
-                    else -> {}
+                        else -> {}
+                    }
                 }
-            }
         })
     }
 
