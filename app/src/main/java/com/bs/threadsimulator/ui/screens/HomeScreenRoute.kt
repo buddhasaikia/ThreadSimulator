@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,13 +9,18 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.data.MockDataSource
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.toCompany
@@ -38,9 +45,12 @@ import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 
 @Composable
 fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = hiltViewModel()) {
+    val threadMetrics by homeViewModel.threadMetrics.collectAsState()
+
     HomeScreen(
         innerPadding,
         homeViewModel.companyList,
+        threadMetrics = threadMetrics,
         populateList = { homeViewModel.populateList(it) },
         onStart = { homeViewModel.start() },
         onStop = { homeViewModel.stop() },
@@ -50,10 +60,12 @@ fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = 
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     innerPadding: PaddingValues,
     companyList: List<Company>,
+    threadMetrics: List<ThreadMetrics>,
     onSetUpdateInterval: (String, Long) -> Unit,
     populateList: (Int) -> Unit,
     onStart: () -> Unit,
@@ -65,6 +77,15 @@ fun HomeScreen(
             .fillMaxWidth()
             .fillMaxHeight()
     ) {
+        Text(
+            text = "Total workers:${threadMetrics.count()}",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        // Add thread metrics display
+        ThreadMetricsDisplay(threadMetrics)
+
         Text(
             text = "Set update intervals below (Milliseconds):",
             fontSize = 16.sp,
@@ -178,9 +199,56 @@ fun HomeScreen(
             }
         }
         LazyColumn(modifier = Modifier.padding(horizontal = 8.dp)) {
-            items(companyList) {
-                CompanyItem(it)
+            items(
+                items = companyList,
+                key = { it.stock.symbol }, // Stable key for better recomposition
+                contentType = { it.categoryIndex } // Help Compose optimize similar items
+            ) { company ->
+                CompanyItem(
+                    company = company,
+                    modifier = Modifier.animateItemPlacement() // Smooth updates
+                )
                 HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
+    if (threadMetrics.isEmpty()) return
+
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        items(threadMetrics) { metric ->
+            Card(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .width(200.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text(
+                        text = "Thread: ${metric.threadName}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "Type: ${metric.updateType}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = "Updates: ${metric.updateCount}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = "Avg Time: ${metric.avgUpdateTimeMs}ms",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
@@ -193,6 +261,7 @@ fun StockListPreview() {
         HomeScreen(
             PaddingValues(2.dp),
             companyList = MockDataSource().getCompanyList().map { it.toCompany() },
+            threadMetrics = listOf(),
             populateList = {},
             onSetUpdateInterval = { _, _ -> },
             onStart = {},
