@@ -206,7 +206,7 @@ fun HomeScreen(
             ) { company ->
                 CompanyItem(
                     company = company,
-                    modifier = Modifier.animateItemPlacement() // Smooth updates
+                    modifier = Modifier.animateItem() // Removed animateItemPlacement for compatibility
                 )
                 HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
             }
