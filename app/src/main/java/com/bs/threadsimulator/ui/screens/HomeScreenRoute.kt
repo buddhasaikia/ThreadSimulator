@@ -204,10 +204,7 @@ fun HomeScreen(
                 key = { it.stock.symbol }, // Stable key for better recomposition
                 contentType = { it.categoryIndex } // Help Compose optimize similar items
             ) { company ->
-                CompanyItem(
-                    company = company,
-                    modifier = Modifier.animateItemPlacement() // Smooth updates
-                )
+                CompanyItem(company = company)
                 HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
             }
         }

@@ -26,7 +26,7 @@ import com.bs.threadsimulator.model.Company
 @Composable
 fun CompanyItem(
     company: Company,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) {
     val currentPrice by rememberUpdatedState(company.stock.currentPrice)
 
