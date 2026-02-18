@@ -46,11 +46,13 @@ import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 @Composable
 fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = hiltViewModel()) {
     val threadMetrics by homeViewModel.threadMetrics.collectAsState()
+    val errorMessage = homeViewModel.errorMessage.value
 
     HomeScreen(
         innerPadding,
         homeViewModel.companyList,
         threadMetrics = threadMetrics,
+        errorMessage = errorMessage,
         populateList = { homeViewModel.populateList(it) },
         onStart = { homeViewModel.start() },
         onStop = { homeViewModel.stop() },
@@ -66,6 +68,7 @@ fun HomeScreen(
     innerPadding: PaddingValues,
     companyList: List<Company>,
     threadMetrics: List<ThreadMetrics>,
+    errorMessage: String?,
     onSetUpdateInterval: (String, Long) -> Unit,
     populateList: (Int) -> Unit,
     onStart: () -> Unit,
@@ -77,6 +80,13 @@ fun HomeScreen(
             .fillMaxWidth()
             .fillMaxHeight()
     ) {
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
         Text(
             text = "Total workers:${threadMetrics.count()}",
             fontSize = 16.sp,
@@ -262,6 +272,7 @@ fun StockListPreview() {
             PaddingValues(2.dp),
             companyList = MockDataSource().getCompanyList().map { it.toCompany() },
             threadMetrics = listOf(),
+            errorMessage = null,
             populateList = {},
             onSetUpdateInterval = { _, _ -> },
             onStart = {},

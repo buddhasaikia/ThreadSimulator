@@ -2,6 +2,7 @@ package com.bs.threadsimulator.ui.screens
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bs.threadsimulator.common.ThreadMetrics
@@ -40,6 +41,8 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     // Add StateFlow for thread metrics
     val threadMetrics: StateFlow<List<ThreadMetrics>> = threadMonitor.metrics
+    // Expose error messages for UI feedback
+    val errorMessage = mutableStateOf<String?>(null)
     private var currentThrottleStrategy = ThrottleStrategy.NORMAL
     private val _companyList = mutableStateListOf<Company>().apply {
         addAll(dataRepository.getCompanyList().map { it.toCompany() })
@@ -105,6 +108,11 @@ class HomeViewModel @Inject constructor(
                         channel.send(resource.data)
                     }
 
+                    is Resource.Error -> {
+                        Log.e("ThreadSimulator", "PE fetch failed: ${resource.message}")
+                        errorMessage.value = resource.message ?: "Failed to fetch PE"
+                    }
+
                     else -> {}
                 }
             }
@@ -122,6 +130,11 @@ class HomeViewModel @Inject constructor(
                             channel.send(resource.data)
                         }
 
+                        is Resource.Error -> {
+                            Log.e("ThreadSimulator", "Current price fetch failed: ${resource.message}")
+                            errorMessage.value = resource.message ?: "Failed to fetch current price"
+                        }
+
                         else -> {}
                     }
                 }
@@ -137,6 +150,11 @@ class HomeViewModel @Inject constructor(
                         channel.send(resource.data)
                     }
 
+                    is Resource.Error -> {
+                        Log.e("ThreadSimulator", "High/Low fetch failed: ${resource.message}")
+                        errorMessage.value = resource.message ?: "Failed to fetch high/low"
+                    }
+
                     else -> {}
                 }
             }
@@ -145,16 +163,25 @@ class HomeViewModel @Inject constructor(
 
     private fun initChannel(channel: ReceiveChannel<CompanyInfo>) {
         viewModelScope.launch(Dispatchers.Main) {
-            for (companyInfo in channel) {
-                val company = _companyList[companyInfo.id]
-                with(company) {
-                    threadName = companyInfo.threadName
-                    peRatio = companyInfo.peRatio
-                    stock.currentPrice = companyInfo.stock.currentPrice
-                    stock.high = companyInfo.stock.high
-                    stock.low = companyInfo.stock.low
-                    threadName = companyInfo.threadName
+            try {
+                for (companyInfo in channel) {
+                    val company = _companyList.getOrNull(companyInfo.id) ?: continue
+                    try {
+                        with(company) {
+                            threadName = companyInfo.threadName
+                            peRatio = companyInfo.peRatio
+                            stock.currentPrice = companyInfo.stock.currentPrice
+                            stock.high = companyInfo.stock.high
+                            stock.low = companyInfo.stock.low
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ThreadSimulator", "Failed to apply update: ${e.message}", e)
+                        errorMessage.value = "Failed to update UI"
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e("ThreadSimulator", "Channel processing failed: ${e.message}", e)
+                errorMessage.value = "Internal processing error"
             }
         }
     }
