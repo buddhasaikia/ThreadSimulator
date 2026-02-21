@@ -43,6 +43,7 @@ import com.bs.threadsimulator.model.toCompany
 import com.bs.threadsimulator.ui.screens.components.CompanyItem
 import com.bs.threadsimulator.ui.screens.components.IntervalInput
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
+import com.bs.threadsimulator.utils.InputValidator
 
 @Composable
 fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = hiltViewModel()) {
@@ -111,46 +112,61 @@ fun HomeScreen(
             verticalAlignment = Alignment.Top
         ) {
             var peUpdateIntervalInMs by remember { mutableStateOf("1500") }
+            var peError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
                 label = "PE (ms)",
                 value = peUpdateIntervalInMs,
                 onValueChange = { value ->
                     peUpdateIntervalInMs = value
-                    if (value.isBlank()) return@IntervalInput
-                    onSetUpdateInterval("PE", peUpdateIntervalInMs.trim().toLong())
+                    val result = InputValidator.validateInterval(value)
+                    peError = result.exceptionOrNull()?.message
+                    result.onSuccess { interval ->
+                        onSetUpdateInterval("PE", interval)
+                    }
                 },
                 modifier = Modifier
                     .weight(2f)
-                    .padding(start = 8.dp, end = 8.dp)
+                    .padding(start = 8.dp, end = 8.dp),
+                isError = peError != null,
+                errorMessage = peError
             )
             var currentPriceUpdateIntervalInMs by remember { mutableStateOf("1000") }
+            var priceError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
                 label = "Price (ms)",
                 value = currentPriceUpdateIntervalInMs,
                 onValueChange = { value ->
                     currentPriceUpdateIntervalInMs = value
-                    if (value.isBlank()) return@IntervalInput
-                    onSetUpdateInterval(
-                        "current_price",
-                        currentPriceUpdateIntervalInMs.trim().toLong()
-                    )
+                    val result = InputValidator.validateInterval(value)
+                    priceError = result.exceptionOrNull()?.message
+                    result.onSuccess { interval ->
+                        onSetUpdateInterval("current_price", interval)
+                    }
                 },
                 modifier = Modifier
                     .weight(2f)
-                    .padding(end = 8.dp)
+                    .padding(end = 8.dp),
+                isError = priceError != null,
+                errorMessage = priceError
             )
             var highLowUpdateIntervalInMs by remember { mutableStateOf("1000") }
+            var highLowError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
                 label = "High/Low (ms)",
                 value = highLowUpdateIntervalInMs,
                 onValueChange = { value ->
                     highLowUpdateIntervalInMs = value
-                    if (value.isBlank()) return@IntervalInput
-                    onSetUpdateInterval("high_low", highLowUpdateIntervalInMs.trim().toLong())
+                    val result = InputValidator.validateInterval(value)
+                    highLowError = result.exceptionOrNull()?.message
+                    result.onSuccess { interval ->
+                        onSetUpdateInterval("high_low", interval)
+                    }
                 },
                 modifier = Modifier
                     .weight(2f)
-                    .padding(end = 8.dp)
+                    .padding(end = 8.dp),
+                isError = highLowError != null,
+                errorMessage = highLowError
             )
         }
         var started by remember { mutableStateOf(false) }
@@ -162,23 +178,30 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             var listSize by remember { mutableStateOf("5") }
+            var listSizeError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
                 label = "List Size",
                 value = listSize,
                 onValueChange = { value ->
                     listSize = value
+                    val result = InputValidator.validateListSize(value)
+                    listSizeError = result.exceptionOrNull()?.message
                 },
                 modifier = Modifier
                     .padding(end = 10.dp)
-                    .weight(2f)
+                    .weight(2f),
+                isError = listSizeError != null,
+                errorMessage = listSizeError
             )
             Button(
                 shape = RoundedCornerShape(4.dp),
                 onClick = {
                     keyboardController?.hide()
                     focusManager.clearFocus()
-                    if (listSize.isBlank()) return@Button
-                    populateList(listSize.trim().toInt())
+                    val result = InputValidator.validateListSize(listSize)
+                    result.onSuccess { size ->
+                        populateList(size)
+                    }
                 },
                 modifier = Modifier
                     .height(60.dp)
