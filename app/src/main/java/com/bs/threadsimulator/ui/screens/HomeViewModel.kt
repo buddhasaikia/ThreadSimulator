@@ -153,7 +153,6 @@ class HomeViewModel @Inject constructor(
                     stock.currentPrice = companyInfo.stock.currentPrice
                     stock.high = companyInfo.stock.high
                     stock.low = companyInfo.stock.low
-                    threadName = companyInfo.threadName
                 }
             }
         }
