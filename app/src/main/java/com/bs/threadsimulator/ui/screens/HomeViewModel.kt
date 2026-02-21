@@ -1,6 +1,6 @@
 package com.bs.threadsimulator.ui.screens
 
-import android.util.Log
+import timber.log.Timber
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -54,7 +54,7 @@ class HomeViewModel @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
         capacity = 15000,
         onUndeliveredElement = {
-            Log.i("ThreadSimulator", "Undelivered: $it")
+            Timber.i("Undelivered: %s", it)
         }
     )
 
@@ -109,7 +109,7 @@ class HomeViewModel @Inject constructor(
                     }
 
                     is Resource.Error -> {
-                        Log.e("ThreadSimulator", "PE fetch failed: ${resource.message}")
+                        Timber.e("PE fetch failed: %s", resource.message)
                         errorMessage.value = resource.message ?: "Failed to fetch PE"
                     }
 
@@ -131,7 +131,7 @@ class HomeViewModel @Inject constructor(
                         }
 
                         is Resource.Error -> {
-                            Log.e("ThreadSimulator", "Current price fetch failed: ${resource.message}")
+                            Timber.e("Current price fetch failed: %s", resource.message)
                             errorMessage.value = resource.message ?: "Failed to fetch current price"
                         }
 
@@ -151,7 +151,7 @@ class HomeViewModel @Inject constructor(
                     }
 
                     is Resource.Error -> {
-                        Log.e("ThreadSimulator", "High/Low fetch failed: ${resource.message}")
+                        Timber.e("High/Low fetch failed: %s", resource.message)
                         errorMessage.value = resource.message ?: "Failed to fetch high/low"
                     }
 
@@ -175,19 +175,19 @@ class HomeViewModel @Inject constructor(
                             stock.low = companyInfo.stock.low
                         }
                     } catch (e: Exception) {
-                        Log.e("ThreadSimulator", "Failed to apply update: ${e.message}", e)
+                        Timber.e(e, "Failed to apply update: %s", e.message)
                         errorMessage.value = "Failed to update UI"
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ThreadSimulator", "Channel processing failed: ${e.message}", e)
+                Timber.e(e, "Channel processing failed: %s", e.message)
                 errorMessage.value = "Internal processing error"
             }
         }
     }
 
     fun stop() {
-        Log.i("ThreadSimulator", "Total jobs: ${jobs.count()}")
+        Timber.i("Total jobs: %d", jobs.count())
         jobs.forEach { it.cancel() }
     }
 
