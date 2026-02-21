@@ -42,7 +42,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val dataRepository: DataRepository,
-    threadMonitor: ThreadMonitor,
+    private val threadMonitor: ThreadMonitor,
     private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
     private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
     private val fetchStockPEUseCase: FetchStockPEUseCase,
@@ -121,6 +121,7 @@ class HomeViewModel @Inject constructor(
      * Populates the company list with the specified number of companies.
      *
      * Automatically adjusts throttling strategy based on list size for optimal performance.
+     * Clears accumulated metrics before starting a new simulation.
      * Updates the UI state with the new list of companies.
      *
      * @param listSize The number of companies to simulate
@@ -130,6 +131,7 @@ class HomeViewModel @Inject constructor(
      */
     fun populateList(listSize: Int) {
         viewModelScope.launch {
+            threadMonitor.clearMetrics()
             adjustThrottlingForListSize(listSize)
             initCompanyListUseCase.execute(listSize)
             _companyList.clear()
