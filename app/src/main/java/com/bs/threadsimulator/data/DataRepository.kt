@@ -69,7 +69,9 @@ class DataRepository @Inject constructor(
     /**
      * Sets the size of the company list to simulate.
      *
-     * @param interval The number of companies to include in simulated data
+     * This is NOT a time interval—it specifies the number of companies to generate.
+     *
+     * @param interval The number of companies to include in simulated data (e.g., 5, 10, 50, 100)
      */
     fun setListSize(interval: Long) {
         listSize = interval
@@ -106,6 +108,7 @@ class DataRepository @Inject constructor(
                         emit(Resource.Success(companyInfo))
                     } else {
                         emit(Resource.Error(message = "Company with symbol $symbol not found"))
+                        break
                     }
                 }
             }.catch {
@@ -143,6 +146,7 @@ class DataRepository @Inject constructor(
                         emit(Resource.Success(companyInfo))
                     } else {
                         emit(Resource.Error(message = "Stock not found"))
+                        break
                     }
                 }
             }.flowOn(appDispatchers.ioDispatcher)
@@ -182,6 +186,7 @@ class DataRepository @Inject constructor(
                         emit(Resource.Success(companyInfo))
                     } else {
                         emit(Resource.Error(message = "Stock not found"))
+                        break
                     }
                 }
             }
