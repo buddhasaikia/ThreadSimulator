@@ -29,6 +29,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for managing thread simulation state and multi-threaded data flows.
+ *
+ * [HomeViewModel] coordinates the execution of concurrent stock data fetch operations,
+ * manages throttling strategies based on list size, and aggregates thread execution metrics.
+ * It demonstrates real-time multi-threaded data collection via channels and provides
+ * comprehensive error handling.
+ *
+ * Thread Safety: Uses Hilt injection and coroutines for thread-safe state management.
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val dataRepository: DataRepository,
@@ -39,14 +49,32 @@ class HomeViewModel @Inject constructor(
     private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
     private val initCompanyListUseCase: InitCompanyListUseCase
 ) : ViewModel() {
-    // Add StateFlow for thread metrics
+    /**
+     * StateFlow of thread execution metrics.
+     *
+     * Emits real-time updates showing thread IDs, update counts, and average update times
+     * for each data fetch operation (PE, CurrentPrice, HighLow).
+     */
     val threadMetrics: StateFlow<List<ThreadMetrics>> = threadMonitor.metrics
-    // Expose error messages for UI feedback
+
+    /**
+     * Observable error message state.
+     *
+     * Set when any data fetch operation fails. Consumers can display this message to the user.
+     */
     val errorMessage = mutableStateOf<String?>(null)
+
     private var currentThrottleStrategy = ThrottleStrategy.NORMAL
     private val _companyList = mutableStateListOf<Company>().apply {
         addAll(dataRepository.getCompanyList().map { it.toCompany() })
     }
+
+    /**
+     * The current list of companies with their stock data.
+     *
+     * Updated in real-time as data arrives from the concurrent fetch operations.
+     * Read-only from outside; mutations happen internally via channel processing.
+     */
     val companyList: List<Company>
         get() = _companyList
     private val jobs = mutableListOf<Job>()
@@ -58,7 +86,6 @@ class HomeViewModel @Inject constructor(
         }
     )
 
-    // Automatically adjust based on list size
     private fun adjustThrottlingForListSize(listSize: Int) {
         val throttleMs = when {
             listSize > 100 -> ThrottleStrategy.RELAXED
@@ -70,17 +97,37 @@ class HomeViewModel @Inject constructor(
 
     private fun setUpdateThrottling(strategy: Long) {
         currentThrottleStrategy = strategy
-        // Restart data collection with new throttling
         stop()
         start()
     }
 
+    /**
+     * Sets the update interval for a specific data type.
+     *
+     * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
+     *
+     * @param name The type of update: "PE", "current_price", "high_low", or "list_size"
+     * @param interval The update interval in milliseconds
+     *
+     * @see SetUpdateIntervalUseCase
+     */
     fun setUpdateInterval(name: String, interval: Long) {
         viewModelScope.launch {
             setUpdateIntervalUseCase.execute(name, interval)
         }
     }
 
+    /**
+     * Populates the company list with the specified number of companies.
+     *
+     * Automatically adjusts throttling strategy based on list size for optimal performance.
+     * Updates the UI state with the new list of companies.
+     *
+     * @param listSize The number of companies to simulate
+     *
+     * @see InitCompanyListUseCase
+     * @see adjustThrottlingForListSize
+     */
     fun populateList(listSize: Int) {
         viewModelScope.launch {
             adjustThrottlingForListSize(listSize)
@@ -90,6 +137,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Starts all concurrent data fetch operations.
+     *
+     * Initializes the channel listener and launches three concurrent collection tasks
+     * (PE, CurrentPrice, HighLow) for each company in the list. Each task runs on the IO dispatcher.
+     *
+     * Thread Safety: Safe to call multiple times; subsequent calls will launch additional jobs.
+     * Call [stop] before starting again to avoid duplicate jobs.
+     *
+     * @see stop
+     */
     fun start() {
         initChannel(channel)
         dataRepository.getCompanyList().forEach {
@@ -186,6 +244,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Stops all concurrent data fetch operations.
+     *
+     * Cancels all active jobs, halting data collection. Thread metrics up to cancellation
+     * are preserved and can still be observed. Safe to call multiple times.
+     *
+     * @see start
+     */
     fun stop() {
         Log.i("ThreadSimulator", "Total jobs: ${jobs.count()}")
         jobs.forEach { it.cancel() }

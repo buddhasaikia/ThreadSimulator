@@ -6,6 +6,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.bs.threadsimulator.data.CompanyInfo
 
+/**
+ * Composable-friendly data class representing a company with stock information.
+ *
+ * Uses Compose state properties (mutableStateOf) to enable reactive UI updates when values change.
+ * Ideal for use in Jetpack Compose UI where state changes automatically trigger recomposition.
+ *
+ * @property companyName The name of the company
+ * @property categoryIndex Index representing the company's category
+ * @property peRatio The current Price-to-Earnings ratio
+ * @property previousClosingPrice The stock price from the previous market close
+ * @property stock Detailed stock price information (current, high, low, open, close)
+ * @property threadName The name of the thread that last updated this company's data
+ */
 class Company(
     companyName: String = "",
     categoryIndex: Int = 0,
@@ -22,6 +35,12 @@ class Company(
     var threadName by mutableStateOf(threadName)
 }
 
+/**
+ * Extension function to convert a [CompanyInfo] data transfer object to a Compose-friendly [Company].
+ *
+ * @receiver The CompanyInfo to convert
+ * @return A new Company instance with the same data
+ */
 fun CompanyInfo.toCompany(): Company {
     return Company(
         companyName = companyName,
