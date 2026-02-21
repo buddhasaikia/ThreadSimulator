@@ -1,6 +1,9 @@
 package com.bs.threadsimulator.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -81,10 +84,14 @@ fun HomeScreen(
             .fillMaxHeight()
     ) {
         if (errorMessage != null) {
+            val errorScrollState = rememberScrollState()
             Text(
                 text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(errorScrollState)
+                    .heightIn(max = 60.dp)
             )
         }
         Text(
