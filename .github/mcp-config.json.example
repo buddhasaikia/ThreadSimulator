@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "gradle": {
+      "description": "Run Gradle build commands",
+      "command": "bash",
+      "args": ["-c", "cd /Users/buddhasaikia/work/AndroidStudioProjects/ThreadSimulator && ./gradlew"],
+      "env": {
+        "GRADLE_OPTS": "-Xmx2g"
+      }
+    },
+    "adb": {
+      "description": "Android Debug Bridge for device/emulator operations",
+      "command": "adb",
+      "args": []
+    }
+  }
+}
