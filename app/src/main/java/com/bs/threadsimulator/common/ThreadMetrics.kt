@@ -46,6 +46,7 @@ class ThreadMonitor @Inject constructor() {
     
     private val updateCounts = ConcurrentHashMap<String, AtomicLong>()
     private val updateTimes = ConcurrentHashMap<String, AtomicLong>()
+    private val threadNames = ConcurrentHashMap<Long, String>()
     
     /**
      * Records an update operation with its execution time.
@@ -59,6 +60,7 @@ class ThreadMonitor @Inject constructor() {
         val thread = Thread.currentThread()
         val key = "${thread.id}_${updateType}"
         
+        threadNames.putIfAbsent(thread.id, thread.name)
         updateCounts.getOrPut(key) { AtomicLong(0) }.incrementAndGet()
         updateTimes.getOrPut(key) { AtomicLong(0) }.addAndGet(updateTimeMs)
         
@@ -68,17 +70,31 @@ class ThreadMonitor @Inject constructor() {
     private fun updateMetrics() {
         val currentMetrics = updateCounts.keys.map { key ->
             val (threadId, updateType) = key.split("_")
+            val threadIdLong = threadId.toLong()
             val count = updateCounts[key]?.get() ?: 0
             val totalTime = updateTimes[key]?.get() ?: 0
             
             ThreadMetrics(
-                threadId = threadId.toLong(),
-                threadName = Thread.currentThread().name,
+                threadId = threadIdLong,
+                threadName = threadNames[threadIdLong] ?: "Unknown",
                 updateType = updateType,
                 updateCount = count,
                 avgUpdateTimeMs = if (count > 0) totalTime / count else 0
             )
         }
         _metrics.value = currentMetrics
+    }
+    
+    /**
+     * Clears all accumulated metrics.
+     *
+     * Useful for resetting metrics when starting a new simulation or test.
+     * Thread-safe.
+     */
+    fun clearMetrics() {
+        updateCounts.clear()
+        updateTimes.clear()
+        threadNames.clear()
+        _metrics.value = emptyList()
     }
 }
