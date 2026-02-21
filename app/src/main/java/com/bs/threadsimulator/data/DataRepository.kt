@@ -67,7 +67,7 @@ class DataRepository @Inject constructor(
                         threadMonitor.recordUpdate("PE", updateTime)
                         emit(Resource.Success(companyInfo))
                     } else {
-                        emit(Resource.Error(message = "Company not found"))
+                        emit(Resource.Error(message = "Company with symbol $symbol not found"))
                     }
                 }
             }.catch {
