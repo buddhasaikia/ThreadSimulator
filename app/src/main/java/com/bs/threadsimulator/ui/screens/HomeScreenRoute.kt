@@ -1,16 +1,7 @@
 package com.bs.threadsimulator.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -91,41 +82,13 @@ fun HomeScreen(
             .fillMaxHeight()
     ) {
         if (errorMessage != null) {
-            val errorScrollState = rememberScrollState()
-            val visibleHeight = 60.dp
-            val density = LocalDensity.current
-            Box(modifier = Modifier.padding(16.dp)) {
-                Row {
-                    Box(modifier = Modifier
-                        .weight(1f)
-                        .height(visibleHeight)
-                        .verticalScroll(errorScrollState)
-                    ) {
-                        Text(
-                            text = errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    // Custom scrollbar thumb
-                    val visiblePx = with(density) { visibleHeight.toPx() }
-                    val max = errorScrollState.maxValue.toFloat().coerceAtLeast(1f)
-                    val contentHeight = visiblePx + max
-                    val thumbHeight = (visiblePx / contentHeight * visiblePx).coerceAtLeast(12f)
-                    val thumbOffset = (errorScrollState.value / max) * (visiblePx - thumbHeight)
-                    Canvas(modifier = Modifier
-                        .width(6.dp)
-                        .height(visibleHeight)
-                    ) {
-                        drawRoundRect(
-                            color = Color.Gray,
-                            topLeft = Offset(0f, thumbOffset),
-                            size = Size(size.width, thumbHeight),
-                            cornerRadius = CornerRadius(3f, 3f)
-                        )
-                    }
-                }
-            }
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
         }
         Text(
             text = "Total workers:${threadMetrics.count()}",
