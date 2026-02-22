@@ -69,7 +69,7 @@ class ThreadMonitor @Inject constructor() {
     
     private fun updateMetrics() {
         val currentMetrics = updateCounts.keys.map { key ->
-            val (threadId, updateType) = key.split("_")
+            val (threadId, updateType) = key.split("_", limit = 2)
             val threadIdLong = threadId.toLong()
             val count = updateCounts[key]?.get() ?: 0
             val totalTime = updateTimes[key]?.get() ?: 0
