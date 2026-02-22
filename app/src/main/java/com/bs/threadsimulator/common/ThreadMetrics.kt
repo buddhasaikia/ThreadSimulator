@@ -52,10 +52,12 @@ class ThreadMonitor @Inject constructor() {
      * Records an update operation with its execution time.
      *
      * Thread-safe. Should be called by worker threads to log their update operations.
+     * Synchronized to prevent race conditions with [clearMetrics] operations.
      *
      * @param updateType The type of update (e.g., "PE", "CurrentPrice", "HighLow")
      * @param updateTimeMs The time taken for this update operation in milliseconds
      */
+    @Synchronized
     fun recordUpdate(updateType: String, updateTimeMs: Long) {
         val thread = Thread.currentThread()
         val key = "${thread.id}_${updateType}"
@@ -89,8 +91,10 @@ class ThreadMonitor @Inject constructor() {
      * Clears all accumulated metrics.
      *
      * Useful for resetting metrics when starting a new simulation or test.
-     * Thread-safe.
+     * Thread-safe. Synchronized to ensure all three maps are cleared atomically,
+     * preventing inconsistent state if [recordUpdate] is called concurrently.
      */
+    @Synchronized
     fun clearMetrics() {
         updateCounts.clear()
         updateTimes.clear()
