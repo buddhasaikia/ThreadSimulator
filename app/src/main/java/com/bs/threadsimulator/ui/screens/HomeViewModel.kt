@@ -131,6 +131,8 @@ class HomeViewModel @Inject constructor(
      */
     fun populateList(listSize: Int) {
         viewModelScope.launch {
+            // Ensure all previous jobs are cancelled so they can't emit metrics into the new run.
+            stop()
             threadMonitor.clearMetrics()
             adjustThrottlingForListSize(listSize)
             initCompanyListUseCase.execute(listSize)
