@@ -1,5 +1,7 @@
 package com.bs.threadsimulator.common
 
+import app.cash.turbine.test
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
@@ -132,5 +134,21 @@ class ThreadMonitorTest {
         assertNotNull("Should find PE metric", peMetric)
         assertEquals("Count should be 2", 2L, peMetric!!.updateCount)
         assertEquals("Avg time should be 150", 150L, peMetric.avgUpdateTimeMs)
+    }
+
+    @Test
+    fun testMetricsFlowEmitsOnRecordUpdate() = runTest {
+        threadMonitor.metrics.test {
+            val initial = awaitItem()
+            assertTrue("Initial metrics should be empty", initial.isEmpty())
+
+            threadMonitor.recordUpdate("PE", 100)
+            val afterUpdate = awaitItem()
+            assertTrue("Should emit updated metrics", afterUpdate.isNotEmpty())
+            assertEquals("PE", afterUpdate.first().updateType)
+            assertEquals(1L, afterUpdate.first().updateCount)
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

@@ -6,7 +6,6 @@ import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Stock
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 import java.math.BigDecimal
-import java.math.RoundingMode
 import org.junit.Rule
 import org.junit.Test
 

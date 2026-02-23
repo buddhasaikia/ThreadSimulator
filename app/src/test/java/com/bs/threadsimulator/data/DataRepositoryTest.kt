@@ -3,6 +3,7 @@ package com.bs.threadsimulator.data
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
@@ -31,6 +32,15 @@ class DataRepositoryTest {
         }
     }
 
+    @After
+    fun tearDown() {
+        // Reset Constants to defaults to avoid test interference
+        Constants.updateIntervalPE = 1500L
+        Constants.updateIntervalHighLow = 1000L
+        Constants.updateIntervalCurrentPrice = 1000L
+        Constants.listSize = 5L
+    }
+
     @Test
     fun testGetCompanyListReturnsNonEmptyList() {
         val companies = repository.getCompanyList()
@@ -49,31 +59,27 @@ class DataRepositoryTest {
     }
 
     @Test
-    fun testSetUpdateIntervalPEUpdatesState() {
+    fun testSetUpdateIntervalPEUpdatesConstant() {
         repository.setUpdateIntervalPE(2000L)
-        val companies = repository.getCompanyList()
-        assertTrue("Should have companies after setting PE interval", companies.isNotEmpty())
+        assertEquals("PE interval should be updated to 2000", 2000L, Constants.updateIntervalPE)
     }
 
     @Test
-    fun testSetUpdateIntervalHighLowUpdatesState() {
+    fun testSetUpdateIntervalHighLowUpdatesConstant() {
         repository.setUpdateIntervalHighLow(1500L)
-        val companies = repository.getCompanyList()
-        assertTrue("Should have companies after setting HighLow interval", companies.isNotEmpty())
+        assertEquals("HighLow interval should be updated to 1500", 1500L, Constants.updateIntervalHighLow)
     }
 
     @Test
-    fun testSetUpdateIntervalCurrentPriceUpdatesState() {
+    fun testSetUpdateIntervalCurrentPriceUpdatesConstant() {
         repository.setUpdateIntervalCurrentPrice(1200L)
-        val companies = repository.getCompanyList()
-        assertTrue("Should have companies after setting CurrentPrice interval", companies.isNotEmpty())
+        assertEquals("CurrentPrice interval should be updated to 1200", 1200L, Constants.updateIntervalCurrentPrice)
     }
 
     @Test
-    fun testSetListSizeUpdatesState() {
+    fun testSetListSizeUpdatesConstant() {
         repository.setListSize(10L)
-        val companies = repository.getCompanyList()
-        assertTrue("Should still have companies after changing list size", companies.isNotEmpty())
+        assertEquals("List size should be updated to 10", 10L, Constants.listSize)
     }
 
     @Test
