@@ -248,12 +248,15 @@ fun HomeScreen(
         LazyColumn(modifier = Modifier.padding(horizontal = 8.dp)) {
             items(
                 items = companyList,
-                key = { it.stock.symbol }, // Stable key for better recomposition
-                contentType = { it.categoryIndex } // Help Compose optimize similar items
+                // Stable key for better recomposition
+                key = { it.stock.symbol },
+                // Help Compose optimize similar items
+                contentType = { it.categoryIndex },
             ) { company ->
                 CompanyItem(
                     company = company,
-                    modifier = Modifier.animateItem() // Removed animateItemPlacement for compatibility
+                    // Removed animateItemPlacement for compatibility
+                    modifier = Modifier.animateItem(),
                 )
                 HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
             }
@@ -269,33 +272,33 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(8.dp),
     ) {
         items(threadMetrics) { metric ->
             Card(
                 modifier =
                     Modifier
                         .padding(4.dp)
-                        .width(200.dp)
+                        .width(200.dp),
             ) {
                 Column(
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(8.dp),
                 ) {
                     Text(
                         text = "Thread: ${metric.threadName}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
                         text = "Type: ${metric.updateType}",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
                         text = "Updates: ${metric.updateCount}",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
                         text = "Avg Time: ${metric.avgUpdateTimeMs}ms",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
@@ -315,7 +318,7 @@ fun StockListPreview() {
             populateList = {},
             onSetUpdateInterval = { _, _ -> },
             onStart = {},
-            onStop = {}
+            onStop = {},
         )
     }
 }
