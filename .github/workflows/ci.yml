@@ -88,6 +88,8 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle-
 
       - name: Run Android lint
+        env:
+          CI: "true"
         run: ./gradlew lint
 
       - name: Upload lint report

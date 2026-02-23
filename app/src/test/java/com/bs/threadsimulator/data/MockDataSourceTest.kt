@@ -14,7 +14,7 @@ class MockDataSourceTest {
     fun setup() {
         mockDataSource = MockDataSource(AppDispatchers())
         runBlocking {
-            CompanyList.initCompanyList(5)
+            CompanyList.initCompanyList(5, AppDispatchers())
         }
     }
 

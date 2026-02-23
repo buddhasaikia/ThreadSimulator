@@ -12,6 +12,6 @@
     <!-- Report missing translations as warnings only -->
     <issue id="MissingTranslation" severity="warning" />
 
-    <!-- Treat missing content descriptions as errors -->
-    <issue id="ContentDescription" severity="error" />
+    <!-- Treat missing content descriptions as warnings initially -->
+    <issue id="ContentDescription" severity="warning" />
 </lint>

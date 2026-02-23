@@ -7,8 +7,8 @@ object CompanyList {
     val generatedCompanies: List<CompanyInfo>
         get() = _generatedCompanies
 
-    suspend fun initCompanyList(listSize: Int) {
-        _generatedCompanies = MockDataSource(AppDispatchers()).generateCompanies(listSize)
-        //_generatedCompanies = CopyOnWriteArrayList(MockDataSource().generateCompanies(listSize))
+    suspend fun initCompanyList(listSize: Int, appDispatchers: AppDispatchers) {
+        _generatedCompanies = MockDataSource(appDispatchers).generateCompanies(listSize)
+        //_generatedCompanies = CopyOnWriteArrayList(MockDataSource(appDispatchers).generateCompanies(listSize))
     }
 }
