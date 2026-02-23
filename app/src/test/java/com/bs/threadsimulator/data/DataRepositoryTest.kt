@@ -17,7 +17,7 @@ class DataRepositoryTest {
 
     @Before
     fun setup() {
-        mockDataSource = MockDataSource()
+        mockDataSource = MockDataSource(AppDispatchers())
         appDispatchers = AppDispatchers()
         threadMonitor = ThreadMonitor()
 

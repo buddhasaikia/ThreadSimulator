@@ -1,6 +1,6 @@
 package com.bs.threadsimulator.data
 
-import kotlinx.coroutines.Dispatchers
+import com.bs.threadsimulator.common.AppDispatchers
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -8,9 +8,9 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlin.random.Random
 
-class MockDataSource @Inject constructor() {
+class MockDataSource @Inject constructor(private val appDispatchers: AppDispatchers) {
     private suspend fun generateRandomCompany(index: Int): CompanyInfo {
-        return withContext(Dispatchers.Default){
+        return withContext(appDispatchers.defaultDispatcher) {
             val companyNames = listOf("Apple", "Microsoft", "Amazon", "Alphabet", "Facebook", "Tesla", "NVIDIA", "PayPal", "Intel", "Netflix",
                 "Adobe", "Salesforce", "Cisco", "Oracle", "IBM", "Qualcomm", "Shopify", "Square", "Twitter", "Spotify")
             val symbols = listOf("AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "PYPL", "INTC", "NFLX",

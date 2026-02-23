@@ -19,4 +19,15 @@ class AppDispatchers @Inject constructor() {
      */
     val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
+    /**
+     * Dispatcher for CPU-intensive computations.
+     *
+     * Used for tasks that are CPU-bound, such as sorting, parsing, or calculations.
+     */
+    val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+
+    /**
+     * Dispatcher for UI operations that must run on the main thread.
+     */
+    val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 }

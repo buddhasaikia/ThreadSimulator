@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.common.ThrottleStrategy
@@ -20,7 +21,6 @@ import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
 import com.bs.threadsimulator.model.toCompany
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -43,6 +43,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val dataRepository: DataRepository,
     private val threadMonitor: ThreadMonitor,
+    private val appDispatchers: AppDispatchers,
     private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
     private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
     private val fetchStockPEUseCase: FetchStockPEUseCase,
@@ -162,7 +163,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun fetchStockPE(symbol: String) {
-        jobs.add(viewModelScope.launch(Dispatchers.IO) {
+        jobs.add(viewModelScope.launch(appDispatchers.ioDispatcher) {
             fetchStockPEUseCase.execute(symbol).collect { resource ->
                 when (resource) {
                     is Resource.Success -> {
@@ -182,7 +183,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun fetchCurrentPrice(symbol: String) {
-        jobs.add(viewModelScope.launch(Dispatchers.IO) {
+        jobs.add(viewModelScope.launch(appDispatchers.ioDispatcher) {
             fetchStockCurrentPriceUseCase.execute(symbol)
                 .throttleUpdates(currentThrottleStrategy)
                 .collect { resource ->
@@ -204,7 +205,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun fetchHighLow(symbol: String) {
-        jobs.add(viewModelScope.launch(Dispatchers.IO) {
+        jobs.add(viewModelScope.launch(appDispatchers.ioDispatcher) {
             fetchStockHighLowUseCase.execute(symbol).collect { resource ->
                 when (resource) {
                     is Resource.Success -> {
@@ -224,7 +225,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun initChannel(channel: ReceiveChannel<CompanyInfo>) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(appDispatchers.mainDispatcher) {
             try {
                 for (companyInfo in channel) {
                     val company = _companyList.getOrNull(companyInfo.id) ?: continue

@@ -68,14 +68,15 @@ android {
     }
 
     lint {
-        abortOnError = false
+        val isCi = System.getenv("CI")?.toBoolean() == true
+        abortOnError = isCi
         htmlReport = true
         htmlOutput = file("build/reports/lint/lint-results.html")
         xmlReport = true
         xmlOutput = file("build/reports/lint/lint-results.xml")
         lintConfig = file("lint.xml")
         checkReleaseBuilds = false
-        warningsAsErrors = false
+        warningsAsErrors = isCi
     }
 }
 
