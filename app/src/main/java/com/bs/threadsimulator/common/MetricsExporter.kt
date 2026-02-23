@@ -91,7 +91,7 @@ class MetricsExporter
                         metric.updateType,
                         metric.updateCount.toString(),
                         metric.avgUpdateTimeMs.toString(),
-                    ).joinToString(",") { escapeCsv(it) }
+                    ).joinToString(",") { value -> escapeCsv(value) }
                 }
             return header + "\n" + rows
         }
