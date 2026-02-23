@@ -28,7 +28,7 @@ class DataRepositoryTest {
         )
 
         runBlocking {
-            CompanyList.initCompanyList(5)
+            CompanyList.initCompanyList(5, AppDispatchers())
         }
     }
 
