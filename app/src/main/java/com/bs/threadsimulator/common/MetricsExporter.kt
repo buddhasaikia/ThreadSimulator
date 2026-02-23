@@ -76,14 +76,34 @@ class MetricsExporter
 
         private fun buildCSVContent(metrics: List<ThreadMetrics>): String {
             val header =
-                "Thread ID,Thread Name,Update Type,Update Count," +
-                    "Avg Update Time (ms)\n"
+                listOf(
+                    "Thread ID",
+                    "Thread Name",
+                    "Update Type",
+                    "Update Count",
+                    "Avg Update Time (ms)",
+                ).joinToString(",") { escapeCsv(it) }
             val rows =
                 metrics.joinToString("\n") { metric ->
-                    "${metric.threadId},${metric.threadName},${metric.updateType}," +
-                        "${metric.updateCount},${metric.avgUpdateTimeMs}"
+                    listOf(
+                        metric.threadId.toString(),
+                        metric.threadName,
+                        metric.updateType,
+                        metric.updateCount.toString(),
+                        metric.avgUpdateTimeMs.toString(),
+                    ).joinToString(",") { escapeCsv(it) }
                 }
-            return header + rows
+            return header + "\n" + rows
+        }
+
+        /**
+         * Escapes a single CSV field according to RFC 4180:
+         * - Wraps the field in double quotes.
+         * - Doubles any embedded double quotes.
+         */
+        private fun escapeCsv(value: String): String {
+            val escaped = value.replace("\"", "\"\"")
+            return "\"$escaped\""
         }
 
         private fun buildJSONContent(metrics: List<ThreadMetrics>): String {
@@ -93,8 +113,8 @@ class MetricsExporter
                     """
                     {
                       "threadId": ${metric.threadId},
-                      "threadName": "${metric.threadName}",
-                      "updateType": "${metric.updateType}",
+                      "threadName": ${escapeJson(metric.threadName)},
+                      "updateType": ${escapeJson(metric.updateType)},
                       "updateCount": ${metric.updateCount},
                       "avgUpdateTimeMs": ${metric.avgUpdateTimeMs}
                     }
@@ -103,7 +123,7 @@ class MetricsExporter
             val result =
                 """
                 {
-                  "exportTime": "$exportTime",
+                  "exportTime": ${escapeJson(exportTime)},
                   "metricsCount": ${metrics.size},
                   "metrics": [
                     $metricsJson
@@ -111,5 +131,22 @@ class MetricsExporter
                 }
                 """.trimIndent()
             return result
+        }
+
+        /**
+         * Escapes a string for JSON according to RFC 7159.
+         * Escapes control characters, quotes, and backslashes, then wraps in quotes.
+         */
+        private fun escapeJson(value: String): String {
+            val escaped =
+                value
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\b", "\\b")
+                    .replace("\u000C", "\\f")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                    .replace("\t", "\\t")
+            return "\"$escaped\""
         }
     }

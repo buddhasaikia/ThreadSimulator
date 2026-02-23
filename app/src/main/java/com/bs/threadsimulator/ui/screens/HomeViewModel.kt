@@ -280,45 +280,44 @@ class HomeViewModel
         }
 
         /**
-         * Exports collected metrics to CSV format.
+         * Exports collected metrics to the specified format.
          *
-         * Launches the export operation on the IO dispatcher and updates error state on failure.
+         * Launches the export operation on the IO dispatcher and updates error state.
          * On success, logs the file path and updates error state with success message.
+         *
+         * @param format Export format: "csv" or "json"
          */
-        fun exportMetricsCSV() {
+        private fun exportMetrics(format: String) {
             viewModelScope.launch(appDispatchers.ioDispatcher) {
-                when (val result = exportMetricsUseCase.execute("csv")) {
+                when (val result = exportMetricsUseCase.execute(format)) {
                     is ExportedMetrics.Success -> {
                         errorMessage.value = "Exported to ${result.fileName}"
-                        Timber.i("Metrics exported to CSV: %s", result.filePath)
+                        Timber.i("Metrics exported to %s: %s", format.uppercase(), result.filePath)
                     }
                     is ExportedMetrics.Error -> {
                         errorMessage.value = "Export failed: ${result.message}"
-                        Timber.e("CSV export failed: %s", result.message)
+                        Timber.e("${format.uppercase()} export failed: %s", result.message)
                     }
                 }
             }
         }
 
         /**
+         * Exports collected metrics to CSV format.
+         *
+         * Convenience function that delegates to [exportMetrics] with "csv" format.
+         */
+        fun exportMetricsCSV() {
+            exportMetrics("csv")
+        }
+
+        /**
          * Exports collected metrics to JSON format.
          *
-         * Launches the export operation on the IO dispatcher and updates error state on failure.
-         * On success, logs the file path and updates error state with success message.
+         * Convenience function that delegates to [exportMetrics] with "json" format.
          */
         fun exportMetricsJSON() {
-            viewModelScope.launch(appDispatchers.ioDispatcher) {
-                when (val result = exportMetricsUseCase.execute("json")) {
-                    is ExportedMetrics.Success -> {
-                        errorMessage.value = "Exported to ${result.fileName}"
-                        Timber.i("Metrics exported to JSON: %s", result.filePath)
-                    }
-                    is ExportedMetrics.Error -> {
-                        errorMessage.value = "Export failed: ${result.message}"
-                        Timber.e("JSON export failed: %s", result.message)
-                    }
-                }
-            }
+            exportMetrics("json")
         }
 
         override fun onCleared() {
