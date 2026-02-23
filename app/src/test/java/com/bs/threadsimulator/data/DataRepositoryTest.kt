@@ -4,12 +4,11 @@ import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
 
 class DataRepositoryTest {
-
     private lateinit var repository: DataRepository
     private lateinit var mockDataSource: MockDataSource
     private lateinit var appDispatchers: AppDispatchers
@@ -21,11 +20,12 @@ class DataRepositoryTest {
         appDispatchers = AppDispatchers()
         threadMonitor = ThreadMonitor()
 
-        repository = DataRepository(
-            mockDataSource = mockDataSource,
-            appDispatchers = appDispatchers,
-            threadMonitor = threadMonitor
-        )
+        repository =
+            DataRepository(
+                mockDataSource = mockDataSource,
+                appDispatchers = appDispatchers,
+                threadMonitor = threadMonitor,
+            )
 
         runBlocking {
             CompanyList.initCompanyList(5, AppDispatchers())

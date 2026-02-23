@@ -1,7 +1,6 @@
 package com.bs.threadsimulator.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,14 +31,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.data.MockDataSource
 import com.bs.threadsimulator.model.Company
-import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.model.toCompany
 import com.bs.threadsimulator.ui.screens.components.CompanyItem
 import com.bs.threadsimulator.ui.screens.components.IntervalInput
@@ -47,7 +47,10 @@ import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 import com.bs.threadsimulator.utils.InputValidator
 
 @Composable
-fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreenRoute(
+    innerPadding: PaddingValues,
+    homeViewModel: HomeViewModel = hiltViewModel(),
+) {
     val threadMetrics by homeViewModel.threadMetrics.collectAsState()
     val errorMessage = homeViewModel.errorMessage.value
 
@@ -61,7 +64,7 @@ fun HomeScreenRoute(innerPadding: PaddingValues, homeViewModel: HomeViewModel = 
         onStop = { homeViewModel.stop() },
         onSetUpdateInterval = { name, interval ->
             homeViewModel.setUpdateInterval(name, interval)
-        }
+        },
     )
 }
 
@@ -75,13 +78,14 @@ fun HomeScreen(
     onSetUpdateInterval: (String, Long) -> Unit,
     populateList: (Int) -> Unit,
     onStart: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxWidth()
-            .fillMaxHeight()
+        modifier =
+            Modifier
+                .padding(innerPadding)
+                .fillMaxWidth()
+                .fillMaxHeight(),
     ) {
         if (errorMessage != null) {
             Text(
@@ -89,14 +93,14 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(16.dp),
                 maxLines = 3,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
         Text(
             text = "Total workers:${threadMetrics.count()}",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         // Add thread metrics display
         ThreadMetricsDisplay(threadMetrics)
@@ -105,12 +109,12 @@ fun HomeScreen(
             text = "Set update intervals below (Milliseconds):",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             var peUpdateIntervalInMs by remember { mutableStateOf("1500") }
             var peError by remember { mutableStateOf<String?>(null) }
@@ -125,11 +129,12 @@ fun HomeScreen(
                         onSetUpdateInterval("PE", interval)
                     }
                 },
-                modifier = Modifier
-                    .weight(2f)
-                    .padding(start = 8.dp, end = 8.dp),
+                modifier =
+                    Modifier
+                        .weight(2f)
+                        .padding(start = 8.dp, end = 8.dp),
                 isError = peError != null,
-                errorMessage = peError
+                errorMessage = peError,
             )
             var currentPriceUpdateIntervalInMs by remember { mutableStateOf("1000") }
             var priceError by remember { mutableStateOf<String?>(null) }
@@ -144,11 +149,12 @@ fun HomeScreen(
                         onSetUpdateInterval("current_price", interval)
                     }
                 },
-                modifier = Modifier
-                    .weight(2f)
-                    .padding(end = 8.dp),
+                modifier =
+                    Modifier
+                        .weight(2f)
+                        .padding(end = 8.dp),
                 isError = priceError != null,
-                errorMessage = priceError
+                errorMessage = priceError,
             )
             var highLowUpdateIntervalInMs by remember { mutableStateOf("1000") }
             var highLowError by remember { mutableStateOf<String?>(null) }
@@ -163,11 +169,12 @@ fun HomeScreen(
                         onSetUpdateInterval("high_low", interval)
                     }
                 },
-                modifier = Modifier
-                    .weight(2f)
-                    .padding(end = 8.dp),
+                modifier =
+                    Modifier
+                        .weight(2f)
+                        .padding(end = 8.dp),
                 isError = highLowError != null,
-                errorMessage = highLowError
+                errorMessage = highLowError,
             )
         }
         var started by remember { mutableStateOf(false) }
@@ -176,7 +183,7 @@ fun HomeScreen(
         Row(
             modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             var listSize by remember { mutableStateOf("5") }
             var listSizeError by remember { mutableStateOf<String?>(null) }
@@ -188,11 +195,12 @@ fun HomeScreen(
                     val result = InputValidator.validateListSize(value)
                     listSizeError = result.exceptionOrNull()?.message
                 },
-                modifier = Modifier
-                    .padding(end = 10.dp)
-                    .weight(2f),
+                modifier =
+                    Modifier
+                        .padding(end = 10.dp)
+                        .weight(2f),
                 isError = listSizeError != null,
-                errorMessage = listSizeError
+                errorMessage = listSizeError,
             )
             Button(
                 shape = RoundedCornerShape(4.dp),
@@ -204,10 +212,11 @@ fun HomeScreen(
                         populateList(size)
                     }
                 },
-                modifier = Modifier
-                    .height(60.dp)
-                    .padding(top = 4.dp, end = 8.dp)
-                    .weight(2f)
+                modifier =
+                    Modifier
+                        .height(60.dp)
+                        .padding(top = 4.dp, end = 8.dp)
+                        .weight(2f),
             ) {
                 Text("Populate", fontSize = 16.sp)
             }
@@ -223,10 +232,11 @@ fun HomeScreen(
                     }
                     started = !started
                 },
-                modifier = Modifier
-                    .height(60.dp)
-                    .padding(top = 4.dp)
-                    .weight(2f)
+                modifier =
+                    Modifier
+                        .height(60.dp)
+                        .padding(top = 4.dp)
+                        .weight(2f),
             ) {
                 if (started) {
                     Text("Stop", fontSize = 16.sp)
@@ -256,15 +266,17 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
     if (threadMetrics.isEmpty()) return
 
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
     ) {
         items(threadMetrics) { metric ->
             Card(
-                modifier = Modifier
-                    .padding(4.dp)
-                    .width(200.dp)
+                modifier =
+                    Modifier
+                        .padding(4.dp)
+                        .width(200.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(8.dp)

@@ -26,7 +26,7 @@ fun IntervalInput(
     onValueChange: (String) -> Unit,
     modifier: Modifier,
     isError: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
 ) {
     OutlinedTextField(
         value = value,
@@ -34,10 +34,11 @@ fun IntervalInput(
         onValueChange = {
             onValueChange(it.trim())
         },
-        keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Next
-        ),
+        keyboardOptions =
+            KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next,
+            ),
         modifier = modifier,
         isError = isError,
         supportingText = {
@@ -47,9 +48,9 @@ fun IntervalInput(
                     color = androidx.compose.material3.MaterialTheme.colorScheme.error,
                     style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-        }
+        },
     )
 }

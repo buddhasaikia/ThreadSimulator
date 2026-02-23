@@ -7,5 +7,5 @@ data class CompanyInfo(
     var peRatio: String = "",
     var previousClosingPrice: Int = 0,
     var stock: StockInfo = StockInfo(),
-    var threadName: String = ""
+    var threadName: String = "",
 )

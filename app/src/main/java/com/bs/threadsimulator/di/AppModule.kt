@@ -11,7 +11,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     @Provides
     @Singleton
     fun provideThreadMonitor(): ThreadMonitor {
@@ -23,5 +22,4 @@ object AppModule {
     fun provideAppDispatchers(): AppDispatchers {
         return AppDispatchers()
     }
-
 }

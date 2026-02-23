@@ -26,41 +26,45 @@ import com.bs.threadsimulator.model.Company
 @Composable
 fun CompanyItem(
     company: Company,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val currentPrice by rememberUpdatedState(company.stock.currentPrice)
 
     ElevatedCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxWidth()
-            .clickable(enabled = true, onClick = {}),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 6.dp
-        )
+        modifier =
+            modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth()
+                .clickable(enabled = true, onClick = {}),
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 6.dp,
+            ),
     ) {
         Row {
             Text(
                 text = company.stock.symbol,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                textDecoration = TextDecoration.Underline
+                modifier =
+                    Modifier
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                textDecoration = TextDecoration.Underline,
             )
             Text(
                 text = "(${company.companyName})",
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                textDecoration = TextDecoration.Underline
+                modifier =
+                    Modifier
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                textDecoration = TextDecoration.Underline,
             )
         }
         Text(
             text = "PE: ${company.peRatio}",
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
         )
         Text(
             text = "Closing Price: ${company.previousClosingPrice}",
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
         )
 
         // Use remember for expensive computations
@@ -81,12 +85,12 @@ fun CompanyItem(
             Text(
                 text = "High: ${company.stock.high}",
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                color = colorResource(R.color.green)
+                color = colorResource(R.color.green),
             )
             Text(
                 text = "Low: ${company.stock.low}",
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                color = Color.Red
+                color = Color.Red,
             )
         }
         Text(
@@ -94,7 +98,7 @@ fun CompanyItem(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
-            color = colorResource(R.color.yellow)
+            color = colorResource(R.color.yellow),
         )
     }
 }

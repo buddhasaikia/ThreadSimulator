@@ -14,7 +14,6 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +23,8 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         TopAppBar(title = { Text("Thread Simulator") })
-                    }) { innerPadding ->
+                    },
+                ) { innerPadding ->
                     HomeScreenRoute(innerPadding)
                 }
             }
