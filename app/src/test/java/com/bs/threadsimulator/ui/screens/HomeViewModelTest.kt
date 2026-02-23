@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.ui.screens
 
+import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.data.DataRepository
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
@@ -58,6 +59,7 @@ class HomeViewModelTest {
         viewModel = HomeViewModel(
             dataRepository = dataRepository,
             threadMonitor = threadMonitor,
+            appDispatchers = AppDispatchers(),
             fetchStockCurrentPriceUseCase = fetchCurrentPriceUseCase,
             fetchStockHighLowUseCase = fetchHighLowUseCase,
             fetchStockPEUseCase = fetchPEUseCase,

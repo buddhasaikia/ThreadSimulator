@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.data
 
+import com.bs.threadsimulator.common.AppDispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -11,7 +12,7 @@ class MockDataSourceTest {
 
     @Before
     fun setup() {
-        mockDataSource = MockDataSource()
+        mockDataSource = MockDataSource(AppDispatchers())
         runBlocking {
             CompanyList.initCompanyList(5)
         }

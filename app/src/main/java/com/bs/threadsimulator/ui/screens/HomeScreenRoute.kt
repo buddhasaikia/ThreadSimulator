@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.data.MockDataSource
 import com.bs.threadsimulator.model.Company
+import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.model.toCompany
 import com.bs.threadsimulator.ui.screens.components.CompanyItem
 import com.bs.threadsimulator.ui.screens.components.IntervalInput
@@ -296,7 +297,7 @@ fun StockListPreview() {
     ThreadSimulatorTheme {
         HomeScreen(
             PaddingValues(2.dp),
-            companyList = MockDataSource().getCompanyList().map { it.toCompany() },
+            companyList = MockDataSource(AppDispatchers()).getCompanyList().map { it.toCompany() },
             threadMetrics = listOf(),
             errorMessage = null,
             populateList = {},
