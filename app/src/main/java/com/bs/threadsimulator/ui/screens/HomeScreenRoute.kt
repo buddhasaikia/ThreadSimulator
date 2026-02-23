@@ -65,6 +65,8 @@ fun HomeScreenRoute(
         onSetUpdateInterval = { name, interval ->
             homeViewModel.setUpdateInterval(name, interval)
         },
+        onExportCSV = { homeViewModel.exportMetricsCSV() },
+        onExportJSON = { homeViewModel.exportMetricsJSON() },
     )
 }
 
@@ -79,6 +81,8 @@ fun HomeScreen(
     populateList: (Int) -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onExportCSV: () -> Unit,
+    onExportJSON: () -> Unit,
 ) {
     Column(
         modifier =
@@ -245,6 +249,34 @@ fun HomeScreen(
                 }
             }
         }
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(
+                shape = RoundedCornerShape(4.dp),
+                onClick = onExportCSV,
+                modifier =
+                    Modifier
+                        .height(48.dp)
+                        .weight(1f)
+                        .padding(end = 4.dp),
+            ) {
+                Text("Export CSV", fontSize = 14.sp)
+            }
+            Button(
+                shape = RoundedCornerShape(4.dp),
+                onClick = onExportJSON,
+                modifier =
+                    Modifier
+                        .height(48.dp)
+                        .weight(1f)
+                        .padding(start = 4.dp),
+            ) {
+                Text("Export JSON", fontSize = 14.sp)
+            }
+        }
         LazyColumn(modifier = Modifier.padding(horizontal = 8.dp)) {
             items(
                 items = companyList,
@@ -319,6 +351,8 @@ fun StockListPreview() {
             onSetUpdateInterval = { _, _ -> },
             onStart = {},
             onStop = {},
+            onExportCSV = {},
+            onExportJSON = {},
         )
     }
 }
