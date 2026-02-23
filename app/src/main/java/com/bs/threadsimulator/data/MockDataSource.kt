@@ -11,10 +11,32 @@ import kotlin.random.Random
 class MockDataSource @Inject constructor(private val appDispatchers: AppDispatchers) {
     private suspend fun generateRandomCompany(index: Int): CompanyInfo {
         return withContext(appDispatchers.defaultDispatcher) {
-            val companyNames = listOf("Apple", "Microsoft", "Amazon", "Alphabet", "Facebook", "Tesla", "NVIDIA", "PayPal", "Intel", "Netflix",
-                "Adobe", "Salesforce", "Cisco", "Oracle", "IBM", "Qualcomm", "Shopify", "Square", "Twitter", "Spotify")
-            val symbols = listOf("AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "PYPL", "INTC", "NFLX",
-                "ADBE", "CRM", "CSCO", "ORCL", "IBM", "QCOM", "SHOP", "SQ", "TWTR", "SPOT")
+            val companyNames = listOf(
+                "Apple",
+                "Microsoft",
+                "Amazon",
+                "Alphabet",
+                "Facebook",
+                "Tesla",
+                "NVIDIA",
+                "PayPal",
+                "Intel",
+                "Netflix",
+                "Adobe",
+                "Salesforce",
+                "Cisco",
+                "Oracle",
+                "IBM",
+                "Qualcomm",
+                "Shopify",
+                "Square",
+                "Twitter",
+                "Spotify",
+            )
+            val symbols = listOf(
+                "AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "PYPL", "INTC", "NFLX",
+                "ADBE", "CRM", "CSCO", "ORCL", "IBM", "QCOM", "SHOP", "SQ", "TWTR", "SPOT",
+            )
             val categoryIndices = (1..4).toList()
 
             val nameIndex = Random.nextInt(companyNames.size)

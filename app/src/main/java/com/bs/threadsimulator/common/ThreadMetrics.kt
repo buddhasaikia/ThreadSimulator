@@ -43,11 +43,11 @@ class ThreadMonitor @Inject constructor() {
      * real-time changes in thread execution metrics.
      */
     val metrics: StateFlow<List<ThreadMetrics>> = _metrics.asStateFlow()
-    
+
     private val updateCounts = ConcurrentHashMap<String, AtomicLong>()
     private val updateTimes = ConcurrentHashMap<String, AtomicLong>()
     private val threadNames = ConcurrentHashMap<Long, String>()
-    
+
     /**
      * Records an update operation with its execution time.
      *
@@ -61,21 +61,21 @@ class ThreadMonitor @Inject constructor() {
     fun recordUpdate(updateType: String, updateTimeMs: Long) {
         val thread = Thread.currentThread()
         val key = "${thread.id}_${updateType}"
-        
+
         threadNames.putIfAbsent(thread.id, thread.name)
         updateCounts.getOrPut(key) { AtomicLong(0) }.incrementAndGet()
         updateTimes.getOrPut(key) { AtomicLong(0) }.addAndGet(updateTimeMs)
-        
+
         updateMetrics()
     }
-    
+
     private fun updateMetrics() {
         val currentMetrics = updateCounts.keys.map { key ->
             val (threadId, updateType) = key.split("_", limit = 2)
             val threadIdLong = threadId.toLong()
             val count = updateCounts[key]?.get() ?: 0
             val totalTime = updateTimes[key]?.get() ?: 0
-            
+
             ThreadMetrics(
                 threadId = threadIdLong,
                 threadName = threadNames[threadIdLong] ?: "Unknown",
@@ -86,7 +86,7 @@ class ThreadMonitor @Inject constructor() {
         }
         _metrics.value = currentMetrics
     }
-    
+
     /**
      * Clears all accumulated metrics.
      *

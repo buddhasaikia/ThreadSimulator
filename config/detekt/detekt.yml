@@ -79,10 +79,10 @@ complexity:
     active: true
     threshold: 600
   LongMethod:
-    active: true
+    active: false
     threshold: 60
   LongParameterList:
-    active: true
+    active: false
     functionThreshold: 6
     constructorThreshold: 7
     ignoreDefaultParameters: false
@@ -202,16 +202,10 @@ exceptions:
     active: true
   ThrowingExceptionInMain:
     active: false
-  ThrowingExceptionsWithoutMessageOrCause:
-    active: true
-    allowedExceptionTypes:
-      - 'IllegalArgumentException'
-      - 'IllegalStateException'
-      - 'IOException'
   ThrowingNewInstanceOfSameException:
     active: true
   TooGenericExceptionCaught:
-    active: true
+    active: false
     exceptionNames:
       - 'ArrayIndexOutOfBoundsException'
       - 'Error'
@@ -241,12 +235,6 @@ naming:
     parameterPattern: '[a-z][A-Za-z0-9]*'
     privateParameterPattern: '[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
-  EnumEntryNaming:
-    active: true
-    enumEntryPattern: '[A-Z][_a-zA-Z0-9]*'
-  EnumNaming:
-    active: true
-    enumPattern: '[A-Z][a-zA-Z0-9]*'
   ForbiddenClassName:
     active: false
   FunctionMaxLength:
@@ -312,8 +300,6 @@ performance:
     active: true
   SpreadOperator:
     active: true
-    excludedFunctions:
-      - 'illegalArgument'
   UnnecessaryPartOfBinaryExpression:
     active: false
   UnnecessaryTemporaryInstantiation:
