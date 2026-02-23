@@ -77,7 +77,7 @@ android {
         lintConfig = file("lint.xml")
         checkReleaseBuilds = false
         warningsAsErrors = isCi
-        disable += "AndroidGradlePluginVersion"
+        baseline = file("lint-baseline.xml")
     }
 }
 
