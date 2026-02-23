@@ -17,24 +17,27 @@ object InputValidator {
     fun validateInterval(
         value: String,
         minMs: Long = MIN_INTERVAL_MS,
-        maxMs: Long = MAX_INTERVAL_MS
+        maxMs: Long = MAX_INTERVAL_MS,
     ): Result<Long> {
         return try {
             when {
-                value.isBlank() -> Result.failure(
-                    IllegalArgumentException("Interval cannot be empty")
-                )
+                value.isBlank() ->
+                    Result.failure(
+                        IllegalArgumentException("Interval cannot be empty"),
+                    )
 
                 else -> {
                     val interval = value.trim().toLong()
                     when {
-                        interval < minMs -> Result.failure(
-                            IllegalArgumentException("Interval must be at least $minMs ms")
-                        )
+                        interval < minMs ->
+                            Result.failure(
+                                IllegalArgumentException("Interval must be at least $minMs ms"),
+                            )
 
-                        interval > maxMs -> Result.failure(
-                            IllegalArgumentException("Interval cannot exceed $maxMs ms (1 hour)")
-                        )
+                        interval > maxMs ->
+                            Result.failure(
+                                IllegalArgumentException("Interval cannot exceed $maxMs ms (1 hour)"),
+                            )
 
                         else -> Result.success(interval)
                     }
@@ -42,7 +45,7 @@ object InputValidator {
             }
         } catch (e: NumberFormatException) {
             Result.failure(
-                IllegalArgumentException("Please enter a valid number")
+                IllegalArgumentException("Please enter a valid number. ${e.message}"),
             )
         }
     }
@@ -58,24 +61,27 @@ object InputValidator {
     fun validateListSize(
         value: String,
         minSize: Int = MIN_LIST_SIZE,
-        maxSize: Int = MAX_LIST_SIZE
+        maxSize: Int = MAX_LIST_SIZE,
     ): Result<Int> {
         return try {
             when {
-                value.isBlank() -> Result.failure(
-                    IllegalArgumentException("List size cannot be empty")
-                )
+                value.isBlank() ->
+                    Result.failure(
+                        IllegalArgumentException("List size cannot be empty"),
+                    )
 
                 else -> {
                     val size = value.trim().toInt()
                     when {
-                        size < minSize -> Result.failure(
-                            IllegalArgumentException("List size must be at least $minSize")
-                        )
+                        size < minSize ->
+                            Result.failure(
+                                IllegalArgumentException("List size must be at least $minSize"),
+                            )
 
-                        size > maxSize -> Result.failure(
-                            IllegalArgumentException("List size cannot exceed $maxSize")
-                        )
+                        size > maxSize ->
+                            Result.failure(
+                                IllegalArgumentException("List size cannot exceed $maxSize"),
+                            )
 
                         else -> Result.success(size)
                     }
@@ -83,7 +89,7 @@ object InputValidator {
             }
         } catch (e: NumberFormatException) {
             Result.failure(
-                IllegalArgumentException("Please enter a valid number")
+                IllegalArgumentException("Please enter a valid number. ${e.message}"),
             )
         }
     }

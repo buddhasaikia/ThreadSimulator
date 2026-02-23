@@ -2,12 +2,11 @@ package com.bs.threadsimulator.data
 
 import com.bs.threadsimulator.common.AppDispatchers
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
 
 class MockDataSourceTest {
-
     private lateinit var mockDataSource: MockDataSource
 
     @Before
@@ -40,57 +39,63 @@ class MockDataSourceTest {
     }
 
     @Test
-    fun testGenerateCompaniesReturnsCorrectCount() = runBlocking {
-        val count = 5
-        val companies = mockDataSource.generateCompanies(count)
-        assertEquals(count, companies.size)
-    }
+    fun testGenerateCompaniesReturnsCorrectCount() =
+        runBlocking {
+            val count = 5
+            val companies = mockDataSource.generateCompanies(count)
+            assertEquals(count, companies.size)
+        }
 
     @Test
-    fun testGeneratedCompaniesHaveValidSymbolFormat() = runBlocking {
-        val companies = mockDataSource.generateCompanies(5)
-        companies.forEachIndexed { index, company ->
-            val symbol = company.stock.symbol
-            assertTrue("Symbol should not be empty", symbol.isNotEmpty())
-            // Symbol format: <LETTERS><4-digit-index>, e.g. "AAPL0000"
-            assertTrue("Symbol should end with 4-digit index", symbol.matches(Regex(".*\\d{4}$")))
-            assertTrue("Symbol should contain the padded index",
-                symbol.endsWith(index.toString().padStart(4, '0')))
+    fun testGeneratedCompaniesHaveValidSymbolFormat() =
+        runBlocking {
+            val companies = mockDataSource.generateCompanies(5)
+            companies.forEachIndexed { index, company ->
+                val symbol = company.stock.symbol
+                assertTrue("Symbol should not be empty", symbol.isNotEmpty())
+                // Symbol format: <LETTERS><4-digit-index>, e.g. "AAPL0000"
+                assertTrue("Symbol should end with 4-digit index", symbol.matches(Regex(".*\\d{4}$")))
+                assertTrue(
+                    "Symbol should contain the padded index",
+                    symbol.endsWith(index.toString().padStart(4, '0')),
+                )
+            }
         }
-    }
 
     @Test
-    fun testGeneratedCompaniesHaveValidPrices() = runBlocking {
-        val companies = mockDataSource.generateCompanies(5)
-        companies.forEach { company ->
-            val high = company.stock.high.toDouble()
-            val low = company.stock.low.toDouble()
-            val currentPrice = company.stock.currentPrice.toDouble()
-            val openingPrice = company.stock.openingPrice.toDouble()
-            val closingPrice = company.stock.closingPrice.toDouble()
+    fun testGeneratedCompaniesHaveValidPrices() =
+        runBlocking {
+            val companies = mockDataSource.generateCompanies(5)
+            companies.forEach { company ->
+                val high = company.stock.high.toDouble()
+                val low = company.stock.low.toDouble()
+                val currentPrice = company.stock.currentPrice.toDouble()
+                val openingPrice = company.stock.openingPrice.toDouble()
+                val closingPrice = company.stock.closingPrice.toDouble()
 
-            assertTrue("Opening price should be positive", openingPrice > 0)
-            assertTrue("Closing price should be positive", closingPrice > 0)
-            assertTrue("High should be >= Low", high >= low)
-            assertTrue("Current price should be within [low, high]", currentPrice >= low && currentPrice <= high)
-            // High must be at least as large as max(opening, closing)
-            val maxPrice = maxOf(openingPrice, closingPrice)
-            assertTrue("High should be >= max(opening, closing)", high >= maxPrice * 0.99)
-            // Low must be at most as small as min(opening, closing)
-            val minPrice = minOf(openingPrice, closingPrice)
-            assertTrue("Low should be <= min(opening, closing)", low <= minPrice * 1.01)
+                assertTrue("Opening price should be positive", openingPrice > 0)
+                assertTrue("Closing price should be positive", closingPrice > 0)
+                assertTrue("High should be >= Low", high >= low)
+                assertTrue("Current price should be within [low, high]", currentPrice >= low && currentPrice <= high)
+                // High must be at least as large as max(opening, closing)
+                val maxPrice = maxOf(openingPrice, closingPrice)
+                assertTrue("High should be >= max(opening, closing)", high >= maxPrice * 0.99)
+                // Low must be at most as small as min(opening, closing)
+                val minPrice = minOf(openingPrice, closingPrice)
+                assertTrue("Low should be <= min(opening, closing)", low <= minPrice * 1.01)
+            }
         }
-    }
 
     @Test
-    fun testGeneratedCompaniesHaveValidPERatio() = runBlocking {
-        val companies = mockDataSource.generateCompanies(5)
-        companies.forEach { company ->
-            val pe = company.peRatio.toDouble()
-            assertTrue("PE ratio should be >= 10.0", pe >= 10.0)
-            assertTrue("PE ratio should be <= 60.0", pe <= 60.0)
+    fun testGeneratedCompaniesHaveValidPERatio() =
+        runBlocking {
+            val companies = mockDataSource.generateCompanies(5)
+            companies.forEach { company ->
+                val pe = company.peRatio.toDouble()
+                assertTrue("PE ratio should be >= 10.0", pe >= 10.0)
+                assertTrue("PE ratio should be <= 60.0", pe <= 60.0)
+            }
         }
-    }
 
     @Test
     fun testCompanyListHasPreviousClosingPrice() {
@@ -102,20 +107,22 @@ class MockDataSourceTest {
     }
 
     @Test
-    fun testGenerateCompaniesWithLargeCount() = runBlocking {
-        val companies = mockDataSource.generateCompanies(10)
-        assertEquals(10, companies.size)
-        companies.forEach { company ->
-            assertTrue("Each company should have a valid structure", company.companyName.isNotEmpty())
+    fun testGenerateCompaniesWithLargeCount() =
+        runBlocking {
+            val companies = mockDataSource.generateCompanies(10)
+            assertEquals(10, companies.size)
+            companies.forEach { company ->
+                assertTrue("Each company should have a valid structure", company.companyName.isNotEmpty())
+            }
         }
-    }
 
     @Test
-    fun testGeneratedCompaniesHaveUniqueIndices() = runBlocking {
-        val companies = mockDataSource.generateCompanies(5)
-        val indices = companies.map { it.id }
-        assertEquals("All company IDs should be unique", 5, indices.distinct().size)
-    }
+    fun testGeneratedCompaniesHaveUniqueIndices() =
+        runBlocking {
+            val companies = mockDataSource.generateCompanies(5)
+            val indices = companies.map { it.id }
+            assertEquals("All company IDs should be unique", 5, indices.distinct().size)
+        }
 
     @Test
     fun testCategoryIndexIsValid() {

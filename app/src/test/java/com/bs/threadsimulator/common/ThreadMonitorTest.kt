@@ -2,12 +2,11 @@ package com.bs.threadsimulator.common
 
 import app.cash.turbine.test
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
 
 class ThreadMonitorTest {
-
     private lateinit var threadMonitor: ThreadMonitor
 
     @Before
@@ -72,13 +71,14 @@ class ThreadMonitorTest {
 
     @Test
     fun testThreadMetricsDataClass() {
-        val metrics = ThreadMetrics(
-            threadId = 1L,
-            threadName = "TestThread",
-            updateType = "PE",
-            updateCount = 5,
-            avgUpdateTimeMs = 20
-        )
+        val metrics =
+            ThreadMetrics(
+                threadId = 1L,
+                threadName = "TestThread",
+                updateType = "PE",
+                updateCount = 5,
+                avgUpdateTimeMs = 20,
+            )
 
         assertEquals(1L, metrics.threadId)
         assertEquals("TestThread", metrics.threadName)
@@ -137,18 +137,19 @@ class ThreadMonitorTest {
     }
 
     @Test
-    fun testMetricsFlowEmitsOnRecordUpdate() = runTest {
-        threadMonitor.metrics.test {
-            val initial = awaitItem()
-            assertTrue("Initial metrics should be empty", initial.isEmpty())
+    fun testMetricsFlowEmitsOnRecordUpdate() =
+        runTest {
+            threadMonitor.metrics.test {
+                val initial = awaitItem()
+                assertTrue("Initial metrics should be empty", initial.isEmpty())
 
-            threadMonitor.recordUpdate("PE", 100)
-            val afterUpdate = awaitItem()
-            assertTrue("Should emit updated metrics", afterUpdate.isNotEmpty())
-            assertEquals("PE", afterUpdate.first().updateType)
-            assertEquals(1L, afterUpdate.first().updateCount)
+                threadMonitor.recordUpdate("PE", 100)
+                val afterUpdate = awaitItem()
+                assertTrue("Should emit updated metrics", afterUpdate.isNotEmpty())
+                assertEquals("PE", afterUpdate.first().updateType)
+                assertEquals(1L, afterUpdate.first().updateCount)
 
-            cancelAndIgnoreRemainingEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 }

@@ -22,13 +22,14 @@ import kotlinx.coroutines.flow.flow
  *     .collect { resource -> updateUI(resource) }
  * ```
  */
-fun <T> Flow<Resource<T>>.throttleUpdates(windowMs: Long = 16L): Flow<Resource<T>> = flow {
-    var lastEmissionTime = 0L
-    collect { value ->
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastEmissionTime >= windowMs || value is Resource.Error) {
-            emit(value)
-            lastEmissionTime = currentTime
+fun <T> Flow<Resource<T>>.throttleUpdates(windowMs: Long = 16L): Flow<Resource<T>> =
+    flow {
+        var lastEmissionTime = 0L
+        collect { value ->
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastEmissionTime >= windowMs || value is Resource.Error) {
+                emit(value)
+                lastEmissionTime = currentTime
+            }
         }
     }
-}

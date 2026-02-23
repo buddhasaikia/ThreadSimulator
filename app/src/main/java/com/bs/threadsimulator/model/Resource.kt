@@ -14,7 +14,7 @@ package com.bs.threadsimulator.model
 sealed class Resource<out T>(
     val data: T? = null,
     val message: String = "",
-    val throwable: Throwable? = null
+    val throwable: Throwable? = null,
 ) {
     /**
      * Represents a successful operation result.

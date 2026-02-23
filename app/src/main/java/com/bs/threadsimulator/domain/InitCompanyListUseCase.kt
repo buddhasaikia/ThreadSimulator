@@ -10,13 +10,15 @@ import javax.inject.Inject
  * Creates or refreshes the list of companies available for simulation.
  * Useful for testing different list sizes and their impact on threading behavior.
  */
-class InitCompanyListUseCase @Inject constructor(private val appDispatchers: AppDispatchers) {
-    /**
-     * Initializes the company list with the specified number of companies.
-     *
-     * @param listSize The number of companies to generate (e.g., 5, 10, 50, 100)
-     */
-    suspend fun execute(listSize: Int) {
-        CompanyList.initCompanyList(listSize, appDispatchers)
+class InitCompanyListUseCase
+    @Inject
+    constructor(private val appDispatchers: AppDispatchers) {
+        /**
+         * Initializes the company list with the specified number of companies.
+         *
+         * @param listSize The number of companies to generate (e.g., 5, 10, 50, 100)
+         */
+        suspend fun execute(listSize: Int) {
+            CompanyList.initCompanyList(listSize, appDispatchers)
+        }
     }
-}

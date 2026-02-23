@@ -25,7 +25,7 @@ class Company(
     peRatio: String = "",
     previousClosingPrice: Int = 0,
     stock: Stock = Stock(),
-    threadName: String = ""
+    threadName: String = "",
 ) {
     var companyName: String by mutableStateOf(companyName)
     var categoryIndex: Int by mutableIntStateOf(categoryIndex)
@@ -48,12 +48,13 @@ fun CompanyInfo.toCompany(): Company {
         peRatio = peRatio,
         previousClosingPrice = previousClosingPrice,
         threadName = threadName,
-        stock = Stock(
-            stock.symbol,
-            stock.openingPrice,
-            stock.closingPrice,
-            stock.low,
-            stock.high
-        )
+        stock =
+            Stock(
+                stock.symbol,
+                stock.openingPrice,
+                stock.closingPrice,
+                stock.low,
+                stock.high,
+            ),
     )
 }

@@ -8,5 +8,5 @@ data class StockInfo(
     var closingPrice: BigDecimal = BigDecimal(0.0),
     var low: BigDecimal = BigDecimal(0.0),
     var high: BigDecimal = BigDecimal(0.0),
-    var currentPrice: BigDecimal = BigDecimal(0.0)
+    var currentPrice: BigDecimal = BigDecimal(0.0),
 )

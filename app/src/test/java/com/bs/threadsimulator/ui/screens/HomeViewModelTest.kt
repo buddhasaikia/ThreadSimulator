@@ -32,7 +32,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
-
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var viewModel: HomeViewModel
     private lateinit var threadMonitor: ThreadMonitor
@@ -56,16 +55,17 @@ class HomeViewModelTest {
 
         every { dataRepository.getCompanyList() } returns emptyList()
 
-        viewModel = HomeViewModel(
-            dataRepository = dataRepository,
-            threadMonitor = threadMonitor,
-            appDispatchers = AppDispatchers(),
-            fetchStockCurrentPriceUseCase = fetchCurrentPriceUseCase,
-            fetchStockHighLowUseCase = fetchHighLowUseCase,
-            fetchStockPEUseCase = fetchPEUseCase,
-            setUpdateIntervalUseCase = setUpdateIntervalUseCase,
-            initCompanyListUseCase = initCompanyListUseCase
-        )
+        viewModel =
+            HomeViewModel(
+                dataRepository = dataRepository,
+                threadMonitor = threadMonitor,
+                appDispatchers = AppDispatchers(),
+                fetchStockCurrentPriceUseCase = fetchCurrentPriceUseCase,
+                fetchStockHighLowUseCase = fetchHighLowUseCase,
+                fetchStockPEUseCase = fetchPEUseCase,
+                setUpdateIntervalUseCase = setUpdateIntervalUseCase,
+                initCompanyListUseCase = initCompanyListUseCase,
+            )
     }
 
     @After
@@ -102,44 +102,48 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun testSetUpdateIntervalDelegatesToUseCase() = runTest {
-        coEvery { setUpdateIntervalUseCase.execute(any(), any()) } just Runs
+    fun testSetUpdateIntervalDelegatesToUseCase() =
+        runTest {
+            coEvery { setUpdateIntervalUseCase.execute(any(), any()) } just Runs
 
-        viewModel.setUpdateInterval("PE", 1500L)
-        advanceUntilIdle()
+            viewModel.setUpdateInterval("PE", 1500L)
+            advanceUntilIdle()
 
-        coVerify { setUpdateIntervalUseCase.execute("PE", 1500L) }
-    }
-
-    @Test
-    fun testSetUpdateIntervalCurrentPrice() = runTest {
-        coEvery { setUpdateIntervalUseCase.execute(any(), any()) } just Runs
-
-        viewModel.setUpdateInterval("current_price", 2000L)
-        advanceUntilIdle()
-
-        coVerify { setUpdateIntervalUseCase.execute("current_price", 2000L) }
-    }
+            coVerify { setUpdateIntervalUseCase.execute("PE", 1500L) }
+        }
 
     @Test
-    fun testPopulateListCallsInitUseCase() = runTest {
-        coEvery { initCompanyListUseCase.execute(any()) } just Runs
+    fun testSetUpdateIntervalCurrentPrice() =
+        runTest {
+            coEvery { setUpdateIntervalUseCase.execute(any(), any()) } just Runs
 
-        viewModel.populateList(10)
-        advanceUntilIdle()
+            viewModel.setUpdateInterval("current_price", 2000L)
+            advanceUntilIdle()
 
-        coVerify { initCompanyListUseCase.execute(10) }
-    }
+            coVerify { setUpdateIntervalUseCase.execute("current_price", 2000L) }
+        }
 
     @Test
-    fun testPopulateListClearsAndRefreshesCompanyList() = runTest {
-        every { dataRepository.getCompanyList() } returns emptyList()
+    fun testPopulateListCallsInitUseCase() =
+        runTest {
+            coEvery { initCompanyListUseCase.execute(any()) } just Runs
 
-        viewModel.populateList(5)
-        advanceUntilIdle()
+            viewModel.populateList(10)
+            advanceUntilIdle()
 
-        assertTrue("companyList should reflect the repository data", viewModel.companyList.isEmpty())
-    }
+            coVerify { initCompanyListUseCase.execute(10) }
+        }
+
+    @Test
+    fun testPopulateListClearsAndRefreshesCompanyList() =
+        runTest {
+            every { dataRepository.getCompanyList() } returns emptyList()
+
+            viewModel.populateList(5)
+            advanceUntilIdle()
+
+            assertTrue("companyList should reflect the repository data", viewModel.companyList.isEmpty())
+        }
 
     @Test
     fun testErrorMessageCanBeUpdatedAndCleared() {

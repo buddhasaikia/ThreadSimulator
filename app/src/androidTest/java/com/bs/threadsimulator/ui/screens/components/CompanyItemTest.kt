@@ -5,27 +5,28 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Stock
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
-import java.math.BigDecimal
 import org.junit.Rule
 import org.junit.Test
+import java.math.BigDecimal
 
 class CompanyItemTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val testCompany = Company(
-        companyName = "Apple Inc.",
-        stock = Stock(
-            symbol = "AAPL",
-            currentPrice = BigDecimal("150.50"),
-            high = BigDecimal("155.25"),
-            low = BigDecimal("145.75"),
-            openingPrice = BigDecimal("148.00")
-        ),
-        peRatio = "25.50",
-        previousClosingPrice = 149
-    )
+    private val testCompany =
+        Company(
+            companyName = "Apple Inc.",
+            stock =
+                Stock(
+                    symbol = "AAPL",
+                    currentPrice = BigDecimal("150.50"),
+                    high = BigDecimal("155.25"),
+                    low = BigDecimal("145.75"),
+                    openingPrice = BigDecimal("148.00"),
+                ),
+            peRatio = "25.50",
+            previousClosingPrice = 149,
+        )
 
     @Test
     fun testCompanyItemDisplaysSymbol() {
