@@ -19,21 +19,23 @@ class ThreadMonitorTest {
 
         val metrics = threadMonitor.metrics.value
         assertTrue("Should have recorded metrics", metrics.isNotEmpty())
-    }
-
-    @Test
-    fun testRecordingMultipleUpdates() {
-        threadMonitor.recordUpdate("PE", 10)
-        threadMonitor.recordUpdate("PE", 15)
-        threadMonitor.recordUpdate("PE", 20)
-
-        val metrics = threadMonitor.metrics.value
-        assertTrue("Should have at least one metric", metrics.isNotEmpty())
         assertTrue("Should have PE metric", metrics.any { it.updateType == "PE" })
     }
 
     @Test
-    fun testMultipleUpdateTypes() {
+    fun testRecordingMultipleUpdatesTracksData() {
+        threadMonitor.recordUpdate("PE", 10)
+        threadMonitor.recordUpdate("PE", 15)
+
+        val metrics = threadMonitor.metrics.value
+        assertTrue("Should have at least one metric", metrics.isNotEmpty())
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull("PE metric should exist", peMetric)
+        assertTrue("Count should be tracked", peMetric!!.updateCount > 0)
+    }
+
+    @Test
+    fun testMultipleUpdateTypesTracked() {
         threadMonitor.recordUpdate("PE", 10)
         threadMonitor.recordUpdate("CurrentPrice", 5)
 
@@ -56,6 +58,17 @@ class ThreadMonitorTest {
     }
 
     @Test
+    fun testAverageTimeIsCalculated() {
+        threadMonitor.recordUpdate("PE", 100)
+        threadMonitor.recordUpdate("PE", 200)
+
+        val metrics = threadMonitor.metrics.value
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull("PE metric should exist", peMetric)
+        assertTrue("Average time should be calculated", peMetric!!.avgUpdateTimeMs > 0)
+    }
+
+    @Test
     fun testThreadMetricsDataClass() {
         val metrics = ThreadMetrics(
             threadId = 1L,
@@ -74,12 +87,12 @@ class ThreadMonitorTest {
 
     @Test
     fun testMetricsFlowIsReactive() {
-        val initialMetrics = threadMonitor.metrics.value.size
-        
+        val initialSize = threadMonitor.metrics.value.size
+
         threadMonitor.recordUpdate("PE", 10)
-        
-        val afterMetrics = threadMonitor.metrics.value.size
-        assertTrue("Metrics should be updated", afterMetrics >= initialMetrics)
+
+        val afterSize = threadMonitor.metrics.value.size
+        assertTrue("Metrics should be updated", afterSize >= initialSize)
     }
 
     @Test
@@ -90,16 +103,22 @@ class ThreadMonitorTest {
 
         val metrics = threadMonitor.metrics.value
         assertTrue("Should have metrics after multiple calls", metrics.isNotEmpty())
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull("PE metric should exist", peMetric)
+        assertEquals("Count should be 5", 5L, peMetric!!.updateCount)
     }
 
     @Test
-    fun testDifferentTypesInMetrics() {
-        threadMonitor.recordUpdate("PE", 10)
-        threadMonitor.recordUpdate("HighLow", 5)
-        threadMonitor.recordUpdate("CurrentPrice", 15)
+    fun testDifferentTypesAreTrackedIndependently() {
+        threadMonitor.recordUpdate("PE", 100)
+        threadMonitor.recordUpdate("CurrentPrice", 50)
 
         val metrics = threadMonitor.metrics.value
-        assertTrue("Should track all types", metrics.size >= 3)
+        val peMetric = metrics.find { it.updateType == "PE" }
+        val priceMetric = metrics.find { it.updateType == "CurrentPrice" }
+
+        assertTrue("PE should be tracked", peMetric != null)
+        assertTrue("CurrentPrice should be tracked", priceMetric != null)
     }
 
     @Test
@@ -109,9 +128,9 @@ class ThreadMonitorTest {
 
         val metrics = threadMonitor.metrics.value
         val peMetric = metrics.find { it.updateType == "PE" }
-        
+
         assertNotNull("Should find PE metric", peMetric)
-        assertTrue("Count should be at least 1", peMetric!!.updateCount >= 1)
-        assertTrue("Avg time should be reasonable", peMetric.avgUpdateTimeMs in 0..1000)
+        assertEquals("Count should be 2", 2L, peMetric!!.updateCount)
+        assertEquals("Avg time should be 150", 150L, peMetric.avgUpdateTimeMs)
     }
 }

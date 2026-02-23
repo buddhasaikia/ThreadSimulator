@@ -6,6 +6,7 @@ import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Stock
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
 import java.math.BigDecimal
+import java.math.RoundingMode
 import org.junit.Rule
 import org.junit.Test
 
@@ -18,10 +19,10 @@ class CompanyItemTest {
         companyName = "Apple Inc.",
         stock = Stock(
             symbol = "AAPL",
-            currentPrice = BigDecimal(150.50),
-            high = BigDecimal(155.25),
-            low = BigDecimal(145.75),
-            openingPrice = BigDecimal(148.0)
+            currentPrice = BigDecimal("150.50"),
+            high = BigDecimal("155.25"),
+            low = BigDecimal("145.75"),
+            openingPrice = BigDecimal("148.00")
         ),
         peRatio = "25.50",
         previousClosingPrice = 149
@@ -118,13 +119,15 @@ class CompanyItemTest {
     }
 
     @Test
-    fun testCompanyItemIsClickable() {
+    fun testCompanyItemCardIsClickable() {
         composeTestRule.setContent {
             ThreadSimulatorTheme {
                 CompanyItem(company = testCompany)
             }
         }
 
-        composeTestRule.onNodeWithText("AAPL").assertHasClickAction()
+        composeTestRule.onNode(hasClickAction() and hasAnyDescendant(hasText("AAPL")))
+            .assertExists()
+            .assertHasClickAction()
     }
 }
