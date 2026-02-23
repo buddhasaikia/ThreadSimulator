@@ -1,130 +1,150 @@
 package com.bs.threadsimulator.ui.screens
 
 import com.bs.threadsimulator.common.ThreadMonitor
-import com.bs.threadsimulator.model.Company
-import com.bs.threadsimulator.model.Stock
+import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
+import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
+import com.bs.threadsimulator.domain.FetchStockPEUseCase
+import com.bs.threadsimulator.domain.InitCompanyListUseCase
+import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
+import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
-import java.math.BigDecimal
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
+    private val testDispatcher = UnconfinedTestDispatcher()
+    private lateinit var viewModel: HomeViewModel
     private lateinit var threadMonitor: ThreadMonitor
+    private lateinit var dataRepository: DataRepository
+    private lateinit var fetchCurrentPriceUseCase: FetchStockCurrentPriceUseCase
+    private lateinit var fetchHighLowUseCase: FetchStockHighLowUseCase
+    private lateinit var fetchPEUseCase: FetchStockPEUseCase
+    private lateinit var initCompanyListUseCase: InitCompanyListUseCase
+    private lateinit var setUpdateIntervalUseCase: SetUpdateIntervalUseCase
 
     @Before
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         threadMonitor = ThreadMonitor()
-    }
+        dataRepository = mockk(relaxed = true)
+        fetchCurrentPriceUseCase = mockk(relaxed = true)
+        fetchHighLowUseCase = mockk(relaxed = true)
+        fetchPEUseCase = mockk(relaxed = true)
+        initCompanyListUseCase = mockk(relaxed = true)
+        setUpdateIntervalUseCase = mockk(relaxed = true)
 
-    @Test
-    fun testThreadMonitorIsAvailable() {
-        assertNotNull(threadMonitor)
-    }
+        every { dataRepository.getCompanyList() } returns emptyList()
 
-    @Test
-    fun testErrorMessageCanBeSet() {
-        val errorMessage = mutableMapOf<String, String?>()
-        errorMessage["error"] = "Test Error"
-        assertEquals("Test Error", errorMessage["error"])
-    }
-
-    @Test
-    fun testErrorMessageCanBeCleared() {
-        val errorMessage = mutableMapOf<String, String?>()
-        errorMessage["error"] = "Test Error"
-        errorMessage["error"] = null
-        assertNull(errorMessage["error"])
-    }
-
-    @Test
-    fun testCompanyStateUpdate() {
-        val company = Company(
-            companyName = "Apple Inc",
-            stock = Stock(
-                symbol = "AAPL",
-                currentPrice = BigDecimal("150.00"),
-                high = BigDecimal("155.00"),
-                low = BigDecimal("145.00")
-            )
+        viewModel = HomeViewModel(
+            dataRepository = dataRepository,
+            threadMonitor = threadMonitor,
+            fetchStockCurrentPriceUseCase = fetchCurrentPriceUseCase,
+            fetchStockHighLowUseCase = fetchHighLowUseCase,
+            fetchStockPEUseCase = fetchPEUseCase,
+            setUpdateIntervalUseCase = setUpdateIntervalUseCase,
+            initCompanyListUseCase = initCompanyListUseCase
         )
+    }
 
-        assertEquals("Apple Inc", company.companyName)
-        assertEquals("AAPL", company.stock.symbol)
-        assertEquals(BigDecimal("150.00"), company.stock.currentPrice)
+    @After
+    fun tearDown() {
+        viewModel.stop()
+        Dispatchers.resetMain()
     }
 
     @Test
-    fun testCompanyListManagement() {
-        val company1 = Company(companyName = "Apple Inc", stock = Stock(symbol = "AAPL"))
-        val company2 = Company(companyName = "Google LLC", stock = Stock(symbol = "GOOGL"))
-
-        val companies = mutableListOf(company1, company2)
-        assertEquals(2, companies.size)
-        assertEquals("Apple Inc", companies[0].companyName)
-        assertEquals("Google LLC", companies[1].companyName)
+    fun testInitialErrorMessageIsNull() {
+        assertNull("errorMessage should be null initially", viewModel.errorMessage.value)
     }
 
     @Test
-    fun testStockPriceUpdate() {
-        val stock = Stock(
-            symbol = "AAPL",
-            currentPrice = BigDecimal("150.00"),
-            high = BigDecimal("155.00"),
-            low = BigDecimal("145.00")
-        )
-
-        stock.currentPrice = BigDecimal("151.00")
-        assertEquals(BigDecimal("151.00"), stock.currentPrice)
+    fun testCompanyListInitiallyEmpty() {
+        assertTrue("companyList should be empty when repository returns empty", viewModel.companyList.isEmpty())
     }
 
     @Test
-    fun testStockHighLowUpdate() {
-        val stock = Stock(symbol = "AAPL")
-        stock.high = BigDecimal("160.00")
-        stock.low = BigDecimal("140.00")
-
-        assertEquals(BigDecimal("160.00"), stock.high)
-        assertEquals(BigDecimal("140.00"), stock.low)
+    fun testThreadMetricsFlowIsAccessible() {
+        assertNotNull("threadMetrics should not be null", viewModel.threadMetrics)
+        assertNotNull("threadMetrics.value should not be null", viewModel.threadMetrics.value)
     }
 
     @Test
-    fun testThreadMonitorMetricsAccess() {
-        threadMonitor.recordUpdate("PE", 10)
-        val metrics = threadMonitor.metrics.value
-        assertTrue("Metrics should be accessible", metrics.isNotEmpty())
+    fun testGetCompanyListCalledOnInit() {
+        verify { dataRepository.getCompanyList() }
     }
 
     @Test
-    fun testCompanyThreadNameUpdate() {
-        val company = Company(companyName = "MSFT")
-        company.threadName = "Worker-1"
-
-        assertEquals("Worker-1", company.threadName)
+    fun testStopDoesNotThrow() {
+        viewModel.stop()
+        assertTrue("stop() executes without error", true)
     }
 
     @Test
-    fun testCompanyPERatioUpdate() {
-        val company = Company(companyName = "TSLA")
-        company.peRatio = "25.5"
+    fun testSetUpdateIntervalDelegatesToUseCase() = runTest {
+        coEvery { setUpdateIntervalUseCase.execute(any(), any()) } just Runs
 
-        assertEquals("25.5", company.peRatio)
+        viewModel.setUpdateInterval("PE", 1500L)
+        advanceUntilIdle()
+
+        coVerify { setUpdateIntervalUseCase.execute("PE", 1500L) }
     }
 
     @Test
-    fun testCompanyPreviousClosingPrice() {
-        val company = Company(previousClosingPrice = 150)
+    fun testSetUpdateIntervalCurrentPrice() = runTest {
+        coEvery { setUpdateIntervalUseCase.execute(any(), any()) } just Runs
 
-        assertEquals(150, company.previousClosingPrice)
+        viewModel.setUpdateInterval("current_price", 2000L)
+        advanceUntilIdle()
+
+        coVerify { setUpdateIntervalUseCase.execute("current_price", 2000L) }
     }
 
     @Test
-    fun testStockSymbolPersistence() {
-        val stock = Stock(symbol = "GOOG")
-        stock.currentPrice = BigDecimal("140.00")
+    fun testPopulateListCallsInitUseCase() = runTest {
+        coEvery { initCompanyListUseCase.execute(any()) } just Runs
 
-        assertEquals("GOOG", stock.symbol)
-        assertEquals(BigDecimal("140.00"), stock.currentPrice)
+        viewModel.populateList(10)
+        advanceUntilIdle()
+
+        coVerify { initCompanyListUseCase.execute(10) }
+    }
+
+    @Test
+    fun testPopulateListClearsAndRefreshesCompanyList() = runTest {
+        every { dataRepository.getCompanyList() } returns emptyList()
+
+        viewModel.populateList(5)
+        advanceUntilIdle()
+
+        assertTrue("companyList should reflect the repository data", viewModel.companyList.isEmpty())
+    }
+
+    @Test
+    fun testErrorMessageCanBeUpdatedAndCleared() {
+        viewModel.errorMessage.value = "Network error"
+        assertEquals("Network error", viewModel.errorMessage.value)
+
+        viewModel.errorMessage.value = null
+        assertNull("errorMessage should be null after clearing", viewModel.errorMessage.value)
     }
 }
