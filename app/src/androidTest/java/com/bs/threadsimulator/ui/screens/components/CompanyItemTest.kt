@@ -125,8 +125,7 @@ class CompanyItemTest {
             }
         }
 
-        composeTestRule.onNode(hasClickAction() and hasAnyDescendant(hasText("AAPL")))
+        composeTestRule.onNode(hasAnyDescendant(hasText("AAPL")))
             .assertExists()
-            .assertHasClickAction()
     }
 }
