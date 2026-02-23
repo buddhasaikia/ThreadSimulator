@@ -47,3 +47,4 @@ google-services.json
 # Android Profiling
 *.hprof
 .kotlin/sessions/kotlin-compiler-5244811804688802962.salive
+/.idea
