@@ -7,6 +7,7 @@ indent_size = 4
 indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
+ktlint_function_naming_ignore_when_annotated_with=Composable
 
 [*.{kt,kts}]
 ij_kotlin_allow_trailing_comma = true
