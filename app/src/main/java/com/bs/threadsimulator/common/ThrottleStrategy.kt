@@ -35,7 +35,7 @@ object ThrottleStrategy {
      * Appropriate for metrics like PE ratio that change infrequently.
      */
     const val RELAXED = 64L
-    
+
     /**
      * Determines the throttling strategy for a specific update type.
      *

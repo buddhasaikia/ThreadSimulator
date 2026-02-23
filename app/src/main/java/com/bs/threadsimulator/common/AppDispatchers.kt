@@ -2,8 +2,6 @@ package com.bs.threadsimulator.common
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Provides configured coroutine dispatchers for the application.
@@ -11,8 +9,7 @@ import javax.inject.Singleton
  * Centralizes dispatcher configuration, making it easy to swap implementations for testing
  * or to apply custom dispatcher policies application-wide.
  */
-@Singleton
-class AppDispatchers @Inject constructor() {
+class AppDispatchers {
     /**
      * Dispatcher for I/O operations.
      *
