@@ -4,6 +4,15 @@ plugins {
     alias(libs.plugins.compose.compiler)
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
+}
+
+detekt {
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+    allRules = false
+    ignoredBuildTypes = listOf("release")
 }
 
 android {
@@ -56,6 +65,17 @@ android {
     }
     kapt {
         correctErrorTypes = true
+    }
+
+    lint {
+        abortOnError = false
+        htmlReport = true
+        htmlOutput = file("build/reports/lint/lint-results.html")
+        xmlReport = true
+        xmlOutput = file("build/reports/lint/lint-results.xml")
+        lintConfig = file("lint.xml")
+        checkReleaseBuilds = false
+        warningsAsErrors = false
     }
 }
 

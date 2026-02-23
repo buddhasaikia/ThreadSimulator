@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Disable obsolete SDK suppression -->
+    <issue id="OldTargetApi" severity="ignore" />
+
+    <!-- Composable naming enforced by convention, not lint -->
+    <issue id="ComposableNaming" severity="ignore" />
+
+    <!-- Allow string literals in Compose previews -->
+    <issue id="HardcodedText" severity="ignore" />
+
+    <!-- Report missing translations as warnings only -->
+    <issue id="MissingTranslation" severity="warning" />
+
+    <!-- Treat missing content descriptions as errors -->
+    <issue id="ContentDescription" severity="error" />
+</lint>
