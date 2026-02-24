@@ -39,8 +39,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.data.MockDataSource
+import com.bs.threadsimulator.mapper.toCompany
 import com.bs.threadsimulator.model.Company
-import com.bs.threadsimulator.model.toCompany
 import com.bs.threadsimulator.ui.screens.components.CompanyItem
 import com.bs.threadsimulator.ui.screens.components.IntervalInput
 import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
