@@ -4,7 +4,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.bs.threadsimulator.data.CompanyInfo
 
 /**
  * Composable-friendly data class representing a company with stock information.
@@ -35,25 +34,3 @@ class Company(
     var threadName by mutableStateOf(threadName)
 }
 
-/**
- * Extension function to convert a [CompanyInfo] data transfer object to a Compose-friendly [Company].
- *
- * @receiver The CompanyInfo to convert
- * @return A new Company instance with the same data
- */
-fun CompanyInfo.toCompany(): Company =
-    Company(
-        companyName = companyName,
-        categoryIndex = categoryIndex,
-        peRatio = peRatio,
-        previousClosingPrice = previousClosingPrice,
-        threadName = threadName,
-        stock =
-            Stock(
-                stock.symbol,
-                stock.openingPrice,
-                stock.closingPrice,
-                stock.low,
-                stock.high,
-            ),
-    )
