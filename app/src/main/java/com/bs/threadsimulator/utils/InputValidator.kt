@@ -18,8 +18,8 @@ object InputValidator {
         value: String,
         minMs: Long = MIN_INTERVAL_MS,
         maxMs: Long = MAX_INTERVAL_MS,
-    ): Result<Long> {
-        return try {
+    ): Result<Long> =
+        try {
             when {
                 value.isBlank() ->
                     Result.failure(
@@ -48,7 +48,6 @@ object InputValidator {
                 IllegalArgumentException("Please enter a valid number. ${e.message}"),
             )
         }
-    }
 
     /**
      * Validates a list size input.
@@ -62,8 +61,8 @@ object InputValidator {
         value: String,
         minSize: Int = MIN_LIST_SIZE,
         maxSize: Int = MAX_LIST_SIZE,
-    ): Result<Int> {
-        return try {
+    ): Result<Int> =
+        try {
             when {
                 value.isBlank() ->
                     Result.failure(
@@ -92,5 +91,4 @@ object InputValidator {
                 IllegalArgumentException("Please enter a valid number. ${e.message}"),
             )
         }
-    }
 }

@@ -11,7 +11,9 @@ import javax.inject.Inject
  */
 class FetchStockHighLowUseCase
     @Inject
-    constructor(private val dataRepository: DataRepository) {
+    constructor(
+        private val dataRepository: DataRepository,
+    ) {
         /**
          * Executes the high/low price fetch operation.
          *

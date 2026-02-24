@@ -11,7 +11,9 @@ import javax.inject.Inject
  */
 class FetchStockPEUseCase
     @Inject
-    constructor(private val dataRepository: DataRepository) {
+    constructor(
+        private val dataRepository: DataRepository,
+    ) {
         /**
          * Executes the PE ratio fetch operation.
          *

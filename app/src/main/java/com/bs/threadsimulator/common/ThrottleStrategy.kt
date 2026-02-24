@@ -42,12 +42,11 @@ object ThrottleStrategy {
      * @param updateType The type of update ("current_price", "high_low", "PE", etc.)
      * @return The throttling interval in milliseconds
      */
-    fun forUpdateType(updateType: String): Long {
-        return when (updateType) {
+    fun forUpdateType(updateType: String): Long =
+        when (updateType) {
             "current_price" -> RAPID
             "high_low" -> NORMAL
             "PE" -> RELAXED
             else -> NORMAL
         }
-    }
 }

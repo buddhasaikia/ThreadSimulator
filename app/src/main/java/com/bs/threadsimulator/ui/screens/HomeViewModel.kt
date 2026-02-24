@@ -198,7 +198,8 @@ class HomeViewModel
         private fun fetchCurrentPrice(symbol: String) {
             jobs.add(
                 viewModelScope.launch(appDispatchers.ioDispatcher) {
-                    fetchStockCurrentPriceUseCase.execute(symbol)
+                    fetchStockCurrentPriceUseCase
+                        .execute(symbol)
                         .throttleUpdates(currentThrottleStrategy)
                         .collect { resource ->
                             when (resource) {

@@ -24,5 +24,7 @@ sealed class ExportedMetrics {
      *
      * @property message Error message describing the failure
      */
-    data class Error(val message: String) : ExportedMetrics()
+    data class Error(
+        val message: String,
+    ) : ExportedMetrics()
 }
