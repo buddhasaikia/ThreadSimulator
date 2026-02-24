@@ -2,7 +2,7 @@ package com.bs.threadsimulator.ui.screens
 
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
-import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
@@ -36,7 +36,7 @@ class HomeViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var viewModel: HomeViewModel
     private lateinit var threadMonitor: ThreadMonitor
-    private lateinit var dataRepository: DataRepository
+    private lateinit var stockRepository: StockRepository
     private lateinit var fetchCurrentPriceUseCase: FetchStockCurrentPriceUseCase
     private lateinit var fetchHighLowUseCase: FetchStockHighLowUseCase
     private lateinit var fetchPEUseCase: FetchStockPEUseCase
@@ -48,7 +48,7 @@ class HomeViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         threadMonitor = ThreadMonitor()
-        dataRepository = mockk(relaxed = true)
+        stockRepository = mockk(relaxed = true)
         fetchCurrentPriceUseCase = mockk(relaxed = true)
         fetchHighLowUseCase = mockk(relaxed = true)
         fetchPEUseCase = mockk(relaxed = true)
@@ -56,11 +56,11 @@ class HomeViewModelTest {
         setUpdateIntervalUseCase = mockk(relaxed = true)
         exportMetricsUseCase = mockk(relaxed = true)
 
-        every { dataRepository.getCompanyList() } returns emptyList()
+        every { stockRepository.getCompanyList() } returns emptyList()
 
         viewModel =
             HomeViewModel(
-                dataRepository = dataRepository,
+                stockRepository = stockRepository,
                 threadMonitor = threadMonitor,
                 appDispatchers = AppDispatchers(),
                 fetchStockCurrentPriceUseCase = fetchCurrentPriceUseCase,
@@ -96,7 +96,7 @@ class HomeViewModelTest {
 
     @Test
     fun testGetCompanyListCalledOnInit() {
-        verify { dataRepository.getCompanyList() }
+        verify { stockRepository.getCompanyList() }
     }
 
     @Test
@@ -141,7 +141,7 @@ class HomeViewModelTest {
     @Test
     fun testPopulateListClearsAndRefreshesCompanyList() =
         runTest {
-            every { dataRepository.getCompanyList() } returns emptyList()
+            every { stockRepository.getCompanyList() } returns emptyList()
 
             viewModel.populateList(5)
             advanceUntilIdle()

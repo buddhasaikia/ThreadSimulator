@@ -4,6 +4,8 @@ import android.content.Context
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.MetricsExporter
 import com.bs.threadsimulator.common.ThreadMonitor
+import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.data.repository.StockRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,4 +29,10 @@ object AppModule {
     fun provideMetricsExporter(
         @ApplicationContext context: Context,
     ): MetricsExporter = MetricsExporter(context)
+
+    @Provides
+    @Singleton
+    fun provideStockRepository(
+        dataRepository: DataRepository,
+    ): StockRepository = dataRepository
 }

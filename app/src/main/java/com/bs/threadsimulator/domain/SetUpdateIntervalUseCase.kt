@@ -1,7 +1,7 @@
 package com.bs.threadsimulator.domain
 
 import com.bs.threadsimulator.common.AppDispatchers
-import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.data.repository.StockRepository
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -15,7 +15,7 @@ import javax.inject.Inject
 class SetUpdateIntervalUseCase
     @Inject
     constructor(
-        private val dataRepository: DataRepository,
+        private val stockRepository: StockRepository,
         private val appDispatchers: AppDispatchers,
     ) {
         /**
@@ -35,10 +35,10 @@ class SetUpdateIntervalUseCase
         ) {
             withContext(appDispatchers.ioDispatcher) {
                 when (name) {
-                    "PE" -> dataRepository.setUpdateIntervalPE(interval)
-                    "current_price" -> dataRepository.setUpdateIntervalCurrentPrice(interval)
-                    "high_low" -> dataRepository.setUpdateIntervalHighLow(interval)
-                    "list_size" -> dataRepository.setListSize(interval)
+                    "PE" -> stockRepository.setUpdateIntervalPE(interval)
+                    "current_price" -> stockRepository.setUpdateIntervalCurrentPrice(interval)
+                    "high_low" -> stockRepository.setUpdateIntervalHighLow(interval)
+                    "list_size" -> stockRepository.setListSize(interval)
                 }
             }
         }
