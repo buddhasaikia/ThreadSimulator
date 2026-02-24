@@ -16,6 +16,7 @@ import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
 import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
+import com.bs.threadsimulator.domain.UpdateIntervalType
 import com.bs.threadsimulator.domain.model.CompanyData
 import com.bs.threadsimulator.mapper.toCompany
 import com.bs.threadsimulator.model.Company
@@ -117,16 +118,42 @@ class HomeViewModel
          * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
          *
          * @param name The type of update: "PE", "current_price", "high_low", or "list_size"
-         * @param interval The update interval in milliseconds
+         * @param interval The update interval in milliseconds (or count for list_size)
          *
          * @see SetUpdateIntervalUseCase
          */
+        @Deprecated("Use setUpdateInterval(UpdateIntervalType, Long) instead for type safety")
         fun setUpdateInterval(
             name: String,
             interval: Long,
         ) {
+            val intervalType =
+                when (name) {
+                    "PE" -> UpdateIntervalType.PE
+                    "current_price" -> UpdateIntervalType.CURRENT_PRICE
+                    "high_low" -> UpdateIntervalType.HIGH_LOW
+                    "list_size" -> UpdateIntervalType.LIST_SIZE
+                    else -> return // Ignore unknown types
+                }
+            setUpdateInterval(intervalType, interval)
+        }
+
+        /**
+         * Sets the update interval for a specific data type using type-safe enum.
+         *
+         * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
+         *
+         * @param intervalType The type of configuration to update
+         * @param interval The update interval in milliseconds (or count for LIST_SIZE)
+         *
+         * @see SetUpdateIntervalUseCase
+         */
+        fun setUpdateInterval(
+            intervalType: UpdateIntervalType,
+            interval: Long,
+        ) {
             viewModelScope.launch {
-                setUpdateIntervalUseCase.execute(name, interval)
+                setUpdateIntervalUseCase.execute(intervalType, interval)
             }
         }
 
@@ -253,14 +280,7 @@ class HomeViewModel
                         ensureActive()
                         val company = _companyList.getOrNull(companyData.id) ?: continue
                         try {
-                            val uiCompany = companyData.toCompany()
-                            with(company) {
-                                threadName = uiCompany.threadName
-                                peRatio = uiCompany.peRatio
-                                stock.currentPrice = uiCompany.stock.currentPrice
-                                stock.high = uiCompany.stock.high
-                                stock.low = uiCompany.stock.low
-                            }
+                            company.updateFromDomain(companyData)
                         } catch (e: Exception) {
                             Timber.e(e, "Failed to apply update: %s", e.message)
                             errorMessage.value = "Failed to update UI"

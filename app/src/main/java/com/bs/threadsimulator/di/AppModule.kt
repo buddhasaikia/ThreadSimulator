@@ -6,6 +6,7 @@ import com.bs.threadsimulator.common.MetricsExporter
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.data.DataRepository
 import com.bs.threadsimulator.data.repository.StockRepository
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,10 +30,17 @@ object AppModule {
     fun provideMetricsExporter(
         @ApplicationContext context: Context,
     ): MetricsExporter = MetricsExporter(context)
+}
 
-    @Provides
+/**
+ * Binding module for repository interfaces.
+ *
+ * Uses Hilt's @Binds annotation for cleaner dependency injection of interface implementations.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+    @Binds
     @Singleton
-    fun provideStockRepository(
-        dataRepository: DataRepository,
-    ): StockRepository = dataRepository
+    abstract fun bindStockRepository(dataRepository: DataRepository): StockRepository
 }
