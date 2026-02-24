@@ -2,6 +2,9 @@ package com.bs.threadsimulator.common
 
 import android.content.Context
 import com.bs.threadsimulator.model.ExportedMetrics
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
@@ -10,16 +13,38 @@ import java.util.Locale
 import javax.inject.Inject
 
 /**
+ * Data classes for JSON serialization.
+ */
+@Serializable
+data class ExportedThreadMetric(
+    val threadId: Long,
+    val threadName: String,
+    val updateType: String,
+    val updateCount: Long,
+    val avgUpdateTimeMs: Long,
+)
+
+@Serializable
+data class MetricsExportJson(
+    val exportTime: String,
+    val metricsCount: Int,
+    val metrics: List<ExportedThreadMetric>,
+)
+
+/**
  * Utility for exporting thread metrics to CSV and JSON formats.
  *
  * Handles serialization and file I/O for metrics snapshots, storing files
  * in the app's cache directory (no external permissions required).
+ * Uses kotlinx.serialization for JSON to ensure proper escaping of special characters.
  */
 class MetricsExporter
     @Inject
     constructor(
         private val context: Context,
     ) {
+        private val json = Json { prettyPrint = true }
+
         /**
          * Exports metrics to CSV format.
          *
@@ -49,6 +74,9 @@ class MetricsExporter
 
         /**
          * Exports metrics to JSON format.
+         *
+         * Uses kotlinx.serialization for proper handling of special characters
+         * and standards-compliant JSON generation.
          *
          * @param metrics List of ThreadMetrics to export
          * @return ExportedMetrics containing file path and export status
@@ -108,45 +136,22 @@ class MetricsExporter
 
         private fun buildJSONContent(metrics: List<ThreadMetrics>): String {
             val exportTime = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
-            val metricsJson =
-                metrics.joinToString(",\n    ") { metric ->
-                    """
-                    {
-                      "threadId": ${metric.threadId},
-                      "threadName": ${escapeJson(metric.threadName)},
-                      "updateType": ${escapeJson(metric.updateType)},
-                      "updateCount": ${metric.updateCount},
-                      "avgUpdateTimeMs": ${metric.avgUpdateTimeMs}
-                    }
-                    """.trimIndent()
+            val exportedMetrics =
+                metrics.map { metric ->
+                    ExportedThreadMetric(
+                        threadId = metric.threadId,
+                        threadName = metric.threadName,
+                        updateType = metric.updateType,
+                        updateCount = metric.updateCount,
+                        avgUpdateTimeMs = metric.avgUpdateTimeMs,
+                    )
                 }
-            val result =
-                """
-                {
-                  "exportTime": ${escapeJson(exportTime)},
-                  "metricsCount": ${metrics.size},
-                  "metrics": [
-                    $metricsJson
-                  ]
-                }
-                """.trimIndent()
-            return result
-        }
-
-        /**
-         * Escapes a string for JSON according to RFC 7159.
-         * Escapes control characters, quotes, and backslashes, then wraps in quotes.
-         */
-        private fun escapeJson(value: String): String {
-            val escaped =
-                value
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\b", "\\b")
-                    .replace("\u000C", "\\f")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r")
-                    .replace("\t", "\\t")
-            return "\"$escaped\""
+            val metricsExport =
+                MetricsExportJson(
+                    exportTime = exportTime,
+                    metricsCount = metrics.size,
+                    metrics = exportedMetrics,
+                )
+            return json.encodeToString(metricsExport)
         }
     }

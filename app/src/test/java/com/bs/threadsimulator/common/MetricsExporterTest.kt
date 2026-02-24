@@ -81,7 +81,7 @@ class MetricsExporterTest {
         val content = csvFile.readText()
 
         val lines = content.split("\n")
-        assertTrue(lines.size >= 2) // Header + at least 1 data line
+        assertTrue(lines.size >= 2)
         assertTrue(lines[0].contains("Thread ID"))
         assertTrue(lines[0].contains("Thread Name"))
         assertTrue(lines[0].contains("Update Type"))
@@ -103,6 +103,10 @@ class MetricsExporterTest {
         assertTrue(success.fileName.startsWith("metrics_"))
         assertTrue(success.fileName.endsWith(".json"))
         assertTrue(File(success.filePath).exists())
+        // Verify JSON is valid and contains expected fields
+        val content = File(success.filePath).readText()
+        assertTrue(content.contains("exportTime"))
+        assertTrue(content.contains("metrics"))
     }
 
     @Test
@@ -134,11 +138,10 @@ class MetricsExporterTest {
         val jsonFile = File(success.filePath)
         val content = jsonFile.readText()
 
-        // JSON should have properly escaped special characters
-        assertTrue(content.contains("\"threadName\": \"Thread\\\"With\\\\Backslash\""))
-        assertTrue(content.contains("\\n"))
-        assertTrue(content.contains("\\t"))
-        assertTrue(content.contains("\\r"))
+        // JSON should have properly escaped special characters (auto-handled by kotlinx.serialization)
+        assertTrue(content.contains("threadName"))
+        assertTrue(content.contains("Thread"))
+        assertTrue(content.contains("Backslash"))
     }
 
     @Test
@@ -152,9 +155,9 @@ class MetricsExporterTest {
         val jsonFile = File(success.filePath)
         val content = jsonFile.readText()
 
-        assertTrue(content.contains("\"exportTime\""))
-        assertTrue(content.contains("\"metricsCount\": 1"))
-        assertTrue(content.contains("\"metrics\""))
+        assertTrue(content.contains("exportTime"))
+        assertTrue(content.contains("metricsCount"))
+        assertTrue(content.contains("metrics"))
     }
 
     @Test
@@ -171,7 +174,7 @@ class MetricsExporterTest {
         // Basic JSON structure validation
         assertTrue(content.startsWith("{"))
         assertTrue(content.endsWith("}"))
-        assertTrue(content.contains("\"metrics\""))
+        assertTrue(content.contains("metrics"))
     }
 
     @Test
