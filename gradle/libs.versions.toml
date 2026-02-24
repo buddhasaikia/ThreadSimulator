@@ -20,7 +20,7 @@ timber = "5.0.1"
 kotlinxSerializationJson = "1.7.3"
 # Testing
 mockito = "5.2.0"
-mockk = "1.13.8"
+mockk = "1.14.9"
 turbine = "1.0.0"
 coroutinesTest = "1.8.0"
 
