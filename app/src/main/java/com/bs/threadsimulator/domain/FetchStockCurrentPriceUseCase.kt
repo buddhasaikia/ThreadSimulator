@@ -2,10 +2,9 @@ package com.bs.threadsimulator.domain
 
 import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.domain.model.CompanyData
-import com.bs.threadsimulator.mapper.toDomainCompanyData
+import com.bs.threadsimulator.mapper.mapToDomainResource
 import com.bs.threadsimulator.model.Resource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -26,11 +25,7 @@ class FetchStockCurrentPriceUseCase
          * @return A Flow emitting Resource-wrapped CompanyData with updated current prices
          */
         suspend fun execute(symbol: String): Flow<Resource<CompanyData>> =
-            stockRepository.fetchStockCurrentPrice(symbol).map { resource ->
-                when (resource) {
-                    is Resource.Success -> Resource.Success(resource.data?.toDomainCompanyData())
-                    is Resource.Loading -> Resource.Loading()
-                    is Resource.Error -> Resource.Error(resource.throwable, resource.message)
-                }
-            }
+            stockRepository
+                .fetchStockCurrentPrice(symbol)
+                .mapToDomainResource()
     }

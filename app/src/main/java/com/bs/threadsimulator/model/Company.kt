@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.bs.threadsimulator.domain.model.CompanyData
 
 /**
  * Composable-friendly data class representing a company with stock information.
@@ -32,5 +33,26 @@ class Company(
     var previousClosingPrice: Int by mutableIntStateOf(previousClosingPrice)
     var stock: Stock by mutableStateOf(stock)
     var threadName by mutableStateOf(threadName)
-}
 
+    /**
+     * Updates this Company with data from a domain model CompanyData.
+     *
+     * This batched update method is more efficient than updating fields individually,
+     * as it performs all state updates in a single operation.
+     *
+     * @param data The domain model to update from
+     */
+    fun updateFromDomain(data: CompanyData) {
+        this.threadName = data.threadName
+        this.peRatio = data.peRatio
+        this.stock =
+            Stock(
+                data.stock.symbol,
+                data.stock.openingPrice,
+                data.stock.closingPrice,
+                data.stock.low,
+                data.stock.high,
+                data.stock.currentPrice,
+            )
+    }
+}

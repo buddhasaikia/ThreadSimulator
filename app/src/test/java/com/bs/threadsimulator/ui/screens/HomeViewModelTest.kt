@@ -9,6 +9,7 @@ import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
 import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
+import com.bs.threadsimulator.domain.UpdateIntervalType
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -113,7 +114,7 @@ class HomeViewModelTest {
             viewModel.setUpdateInterval("PE", 1500L)
             advanceUntilIdle()
 
-            coVerify { setUpdateIntervalUseCase.execute("PE", 1500L) }
+            coVerify { setUpdateIntervalUseCase.execute(UpdateIntervalType.PE, 1500L) }
         }
 
     @Test
@@ -124,7 +125,7 @@ class HomeViewModelTest {
             viewModel.setUpdateInterval("current_price", 2000L)
             advanceUntilIdle()
 
-            coVerify { setUpdateIntervalUseCase.execute("current_price", 2000L) }
+            coVerify { setUpdateIntervalUseCase.execute(UpdateIntervalType.CURRENT_PRICE, 2000L) }
         }
 
     @Test

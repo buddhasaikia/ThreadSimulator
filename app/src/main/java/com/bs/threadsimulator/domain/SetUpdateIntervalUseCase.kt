@@ -22,23 +22,21 @@ class SetUpdateIntervalUseCase
          * Sets the update interval for a specific data type.
          *
          * Executes on the IO dispatcher to prevent blocking the main thread.
-         * Unknown update types are silently ignored (no exception thrown).
          *
-         * @param name The type of configuration to update: "PE" (PE ratio interval in ms), "current_price" (price update interval in ms),
-         *             "high_low" (high/low update interval in ms), or "list_size" (number of companies to simulate)
-         * @param interval For time-based updates (PE, current_price, high_low): interval in milliseconds.
-         *                 For list_size: the number of companies to generate
+         * @param intervalType The type of configuration to update
+         * @param interval For time-based updates (PE, CURRENT_PRICE, HIGH_LOW): interval in milliseconds.
+         *                 For LIST_SIZE: the number of companies to generate
          */
         suspend fun execute(
-            name: String,
+            intervalType: UpdateIntervalType,
             interval: Long,
         ) {
             withContext(appDispatchers.ioDispatcher) {
-                when (name) {
-                    "PE" -> stockRepository.setUpdateIntervalPE(interval)
-                    "current_price" -> stockRepository.setUpdateIntervalCurrentPrice(interval)
-                    "high_low" -> stockRepository.setUpdateIntervalHighLow(interval)
-                    "list_size" -> stockRepository.setListSize(interval)
+                when (intervalType) {
+                    UpdateIntervalType.PE -> stockRepository.setUpdateIntervalPE(interval)
+                    UpdateIntervalType.CURRENT_PRICE -> stockRepository.setUpdateIntervalCurrentPrice(interval)
+                    UpdateIntervalType.HIGH_LOW -> stockRepository.setUpdateIntervalHighLow(interval)
+                    UpdateIntervalType.LIST_SIZE -> stockRepository.setListSize(interval)
                 }
             }
         }

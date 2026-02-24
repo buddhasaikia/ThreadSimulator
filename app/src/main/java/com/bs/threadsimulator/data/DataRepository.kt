@@ -74,10 +74,10 @@ class DataRepository
          *
          * This is NOT a time interval—it specifies the number of companies to generate.
          *
-         * @param interval The number of companies to include in simulated data (e.g., 5, 10, 50, 100)
+         * @param size The number of companies to include in simulated data (e.g., 5, 10, 50, 100)
          */
-        override fun setListSize(interval: Long) {
-            listSize = interval
+        override fun setListSize(size: Long) {
+            listSize = size
         }
 
         /**
