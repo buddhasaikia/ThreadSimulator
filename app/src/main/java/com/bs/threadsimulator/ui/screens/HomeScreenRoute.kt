@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.data.MockDataSource
+import com.bs.threadsimulator.domain.UpdateIntervalType
 import com.bs.threadsimulator.mapper.toCompany
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.ui.screens.components.CompanyItem
@@ -62,8 +63,8 @@ fun HomeScreenRoute(
         populateList = { homeViewModel.populateList(it) },
         onStart = { homeViewModel.start() },
         onStop = { homeViewModel.stop() },
-        onSetUpdateInterval = { name, interval ->
-            homeViewModel.setUpdateInterval(name, interval)
+        onSetUpdateInterval = { updateIntervalType, interval ->
+            homeViewModel.setUpdateInterval(updateIntervalType, interval)
         },
         onExportCSV = { homeViewModel.exportMetricsCSV() },
         onExportJSON = { homeViewModel.exportMetricsJSON() },
@@ -77,7 +78,7 @@ fun HomeScreen(
     companyList: List<Company>,
     threadMetrics: List<ThreadMetrics>,
     errorMessage: String?,
-    onSetUpdateInterval: (String, Long) -> Unit,
+    onSetUpdateInterval: (UpdateIntervalType, Long) -> Unit,
     populateList: (Int) -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
@@ -130,7 +131,7 @@ fun HomeScreen(
                     val result = InputValidator.validateInterval(value)
                     peError = result.exceptionOrNull()?.message
                     result.onSuccess { interval ->
-                        onSetUpdateInterval("PE", interval)
+                        onSetUpdateInterval(UpdateIntervalType.PE, interval)
                     }
                 },
                 modifier =
@@ -150,7 +151,7 @@ fun HomeScreen(
                     val result = InputValidator.validateInterval(value)
                     priceError = result.exceptionOrNull()?.message
                     result.onSuccess { interval ->
-                        onSetUpdateInterval("current_price", interval)
+                        onSetUpdateInterval(UpdateIntervalType.CURRENT_PRICE, interval)
                     }
                 },
                 modifier =
@@ -170,7 +171,7 @@ fun HomeScreen(
                     val result = InputValidator.validateInterval(value)
                     highLowError = result.exceptionOrNull()?.message
                     result.onSuccess { interval ->
-                        onSetUpdateInterval("high_low", interval)
+                        onSetUpdateInterval(UpdateIntervalType.HIGH_LOW, interval)
                     }
                 },
                 modifier =

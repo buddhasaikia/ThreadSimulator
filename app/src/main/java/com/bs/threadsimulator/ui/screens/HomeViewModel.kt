@@ -214,7 +214,7 @@ class HomeViewModel
 
                             is Resource.Error -> {
                                 Timber.e("PE fetch failed: %s", resource.message)
-                                errorMessage.value = resource.message ?: "Failed to fetch PE"
+                                errorMessage.value = resource.message
                             }
 
                             else -> {}
@@ -240,7 +240,7 @@ class HomeViewModel
 
                                 is Resource.Error -> {
                                     Timber.e("Current price fetch failed: %s", resource.message)
-                                    errorMessage.value = resource.message ?: "Failed to fetch current price"
+                                    errorMessage.value = resource.message
                                 }
 
                                 else -> {}
@@ -263,7 +263,7 @@ class HomeViewModel
 
                             is Resource.Error -> {
                                 Timber.e("High/Low fetch failed: %s", resource.message)
-                                errorMessage.value = resource.message ?: "Failed to fetch high/low"
+                                errorMessage.value = resource.message
                             }
 
                             else -> {}
