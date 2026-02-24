@@ -6,6 +6,7 @@ import com.bs.threadsimulator.data.Constants.listSize
 import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
 import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
 import com.bs.threadsimulator.data.Constants.updateIntervalPE
+import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.model.Resource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -38,7 +39,7 @@ class DataRepository
         private val mockDataSource: MockDataSource,
         private val appDispatchers: AppDispatchers,
         private val threadMonitor: ThreadMonitor,
-    ) {
+    ) : StockRepository {
         private val startDelay = 0L
 
         /**
@@ -46,7 +47,7 @@ class DataRepository
          *
          * @param interval The delay in milliseconds between PE ratio updates
          */
-        fun setUpdateIntervalPE(interval: Long) {
+        override fun setUpdateIntervalPE(interval: Long) {
             updateIntervalPE = interval
         }
 
@@ -55,7 +56,7 @@ class DataRepository
          *
          * @param interval The delay in milliseconds between high/low updates
          */
-        fun setUpdateIntervalHighLow(interval: Long) {
+        override fun setUpdateIntervalHighLow(interval: Long) {
             updateIntervalHighLow = interval
         }
 
@@ -64,7 +65,7 @@ class DataRepository
          *
          * @param interval The delay in milliseconds between current price updates
          */
-        fun setUpdateIntervalCurrentPrice(interval: Long) {
+        override fun setUpdateIntervalCurrentPrice(interval: Long) {
             updateIntervalCurrentPrice = interval
         }
 
@@ -75,7 +76,7 @@ class DataRepository
          *
          * @param interval The number of companies to include in simulated data (e.g., 5, 10, 50, 100)
          */
-        fun setListSize(interval: Long) {
+        override fun setListSize(interval: Long) {
             listSize = interval
         }
 
@@ -89,7 +90,7 @@ class DataRepository
          * @return A Flow that emits [Resource.Loading], followed by continuous [Resource.Success]
          *         updates with incremented PE ratio values, or [Resource.Error] if symbol not found
          */
-        suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> =
+        override suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> =
             withContext(appDispatchers.ioDispatcher) {
                 flow {
                     emit(Resource.Loading())
@@ -128,7 +129,7 @@ class DataRepository
          * @return A Flow that emits [Resource.Loading], followed by continuous [Resource.Success]
          *         updates with incremented current price values, or [Resource.Error] if symbol not found
          */
-        suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> =
+        override suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> =
             withContext(appDispatchers.ioDispatcher) {
                 flow {
                     emit(Resource.Loading())
@@ -163,7 +164,7 @@ class DataRepository
          * @return A Flow that emits [Resource.Loading], followed by continuous [Resource.Success]
          *         updates with incremented high/low values, or [Resource.Error] if symbol not found
          */
-        suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> =
+        override suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> =
             withContext(appDispatchers.ioDispatcher) {
                 flow {
                     emit(Resource.Loading())
@@ -200,5 +201,5 @@ class DataRepository
          *
          * @return List of CompanyInfo objects containing stock and metrics data
          */
-        fun getCompanyList(): List<CompanyInfo> = mockDataSource.getCompanyList()
+        override fun getCompanyList(): List<CompanyInfo> = mockDataSource.getCompanyList()
     }

@@ -9,23 +9,24 @@ import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.common.ThrottleStrategy
 import com.bs.threadsimulator.common.throttleUpdates
-import com.bs.threadsimulator.data.CompanyInfo
-import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
 import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
+import com.bs.threadsimulator.domain.model.CompanyData
+import com.bs.threadsimulator.mapper.toCompany
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.ExportedMetrics
 import com.bs.threadsimulator.model.Resource
-import com.bs.threadsimulator.model.toCompany
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -45,7 +46,7 @@ import javax.inject.Inject
 class HomeViewModel
     @Inject
     constructor(
-        private val dataRepository: DataRepository,
+        private val stockRepository: StockRepository,
         private val threadMonitor: ThreadMonitor,
         private val appDispatchers: AppDispatchers,
         private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
@@ -73,7 +74,7 @@ class HomeViewModel
         private var currentThrottleStrategy = ThrottleStrategy.NORMAL
         private val _companyList =
             mutableStateListOf<Company>().apply {
-                addAll(dataRepository.getCompanyList().map { it.toCompany() })
+                addAll(stockRepository.getCompanyList().map { it.toCompany() })
             }
 
         /**
@@ -86,7 +87,7 @@ class HomeViewModel
             get() = _companyList
         private val jobs = mutableListOf<Job>()
         private val channel =
-            Channel<CompanyInfo>(
+            Channel<CompanyData>(
                 onBufferOverflow = BufferOverflow.DROP_OLDEST,
                 capacity = 15000,
                 onUndeliveredElement = {
@@ -149,7 +150,7 @@ class HomeViewModel
                 adjustThrottlingForListSize(listSize)
                 initCompanyListUseCase.execute(listSize)
                 _companyList.clear()
-                _companyList.addAll(dataRepository.getCompanyList().map { it.toCompany() })
+                _companyList.addAll(stockRepository.getCompanyList().map { it.toCompany() })
             }
         }
 
@@ -166,7 +167,7 @@ class HomeViewModel
          */
         fun start() {
             initChannel(channel)
-            dataRepository.getCompanyList().forEach {
+            stockRepository.getCompanyList().forEach {
                 fetchCurrentPrice(it.stock.symbol)
                 fetchHighLow(it.stock.symbol)
                 fetchStockPE(it.stock.symbol)
@@ -177,6 +178,7 @@ class HomeViewModel
             jobs.add(
                 viewModelScope.launch(appDispatchers.ioDispatcher) {
                     fetchStockPEUseCase.execute(symbol).collect { resource ->
+                        ensureActive()
                         when (resource) {
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
@@ -202,6 +204,7 @@ class HomeViewModel
                         .execute(symbol)
                         .throttleUpdates(currentThrottleStrategy)
                         .collect { resource ->
+                            ensureActive()
                             when (resource) {
                                 is Resource.Success -> {
                                     if (resource.data == null) return@collect
@@ -224,6 +227,7 @@ class HomeViewModel
             jobs.add(
                 viewModelScope.launch(appDispatchers.ioDispatcher) {
                     fetchStockHighLowUseCase.execute(symbol).collect { resource ->
+                        ensureActive()
                         when (resource) {
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
@@ -242,18 +246,20 @@ class HomeViewModel
             )
         }
 
-        private fun initChannel(channel: ReceiveChannel<CompanyInfo>) {
+        private fun initChannel(channel: ReceiveChannel<CompanyData>) {
             viewModelScope.launch(appDispatchers.mainDispatcher) {
                 try {
-                    for (companyInfo in channel) {
-                        val company = _companyList.getOrNull(companyInfo.id) ?: continue
+                    for (companyData in channel) {
+                        ensureActive()
+                        val company = _companyList.getOrNull(companyData.id) ?: continue
                         try {
+                            val uiCompany = companyData.toCompany()
                             with(company) {
-                                threadName = companyInfo.threadName
-                                peRatio = companyInfo.peRatio
-                                stock.currentPrice = companyInfo.stock.currentPrice
-                                stock.high = companyInfo.stock.high
-                                stock.low = companyInfo.stock.low
+                                threadName = uiCompany.threadName
+                                peRatio = uiCompany.peRatio
+                                stock.currentPrice = uiCompany.stock.currentPrice
+                                stock.high = uiCompany.stock.high
+                                stock.low = uiCompany.stock.low
                             }
                         } catch (e: Exception) {
                             Timber.e(e, "Failed to apply update: %s", e.message)
