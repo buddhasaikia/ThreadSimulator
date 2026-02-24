@@ -89,8 +89,8 @@ class DataRepository
          * @return A Flow that emits [Resource.Loading], followed by continuous [Resource.Success]
          *         updates with incremented PE ratio values, or [Resource.Error] if symbol not found
          */
-        suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> {
-            return withContext(appDispatchers.ioDispatcher) {
+        suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> =
+            withContext(appDispatchers.ioDispatcher) {
                 flow {
                     emit(Resource.Loading())
                     delay(startDelay)
@@ -117,7 +117,6 @@ class DataRepository
                     emit(Resource.Error(message = it.message ?: ""))
                 }.flowOn(appDispatchers.ioDispatcher)
             }
-        }
 
         /**
          * Fetches and continuously updates the current price for a given stock symbol.
@@ -129,8 +128,8 @@ class DataRepository
          * @return A Flow that emits [Resource.Loading], followed by continuous [Resource.Success]
          *         updates with incremented current price values, or [Resource.Error] if symbol not found
          */
-        suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> {
-            return withContext(appDispatchers.ioDispatcher) {
+        suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> =
+            withContext(appDispatchers.ioDispatcher) {
                 flow {
                     emit(Resource.Loading())
                     delay(startDelay)
@@ -153,7 +152,6 @@ class DataRepository
                     }
                 }.flowOn(appDispatchers.ioDispatcher)
             }
-        }
 
         /**
          * Fetches and continuously updates the high and low prices for a given stock symbol.
@@ -165,8 +163,8 @@ class DataRepository
          * @return A Flow that emits [Resource.Loading], followed by continuous [Resource.Success]
          *         updates with incremented high/low values, or [Resource.Error] if symbol not found
          */
-        suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> {
-            return withContext(appDispatchers.ioDispatcher) {
+        suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> =
+            withContext(appDispatchers.ioDispatcher) {
                 flow {
                     emit(Resource.Loading())
                     delay(startDelay)
@@ -194,18 +192,13 @@ class DataRepository
                     }
                 }
             }
-        }
 
-        private fun getCompanyIndex(symbol: String): Int {
-            return mockDataSource.getCompanyList().indexOfFirst { it.stock.symbol == symbol }
-        }
+        private fun getCompanyIndex(symbol: String): Int = mockDataSource.getCompanyList().indexOfFirst { it.stock.symbol == symbol }
 
         /**
          * Returns the current list of companies with their stock data.
          *
          * @return List of CompanyInfo objects containing stock and metrics data
          */
-        fun getCompanyList(): List<CompanyInfo> {
-            return mockDataSource.getCompanyList()
-        }
+        fun getCompanyList(): List<CompanyInfo> = mockDataSource.getCompanyList()
     }

@@ -12,7 +12,9 @@ import javax.inject.Inject
  */
 class InitCompanyListUseCase
     @Inject
-    constructor(private val appDispatchers: AppDispatchers) {
+    constructor(
+        private val appDispatchers: AppDispatchers,
+    ) {
         /**
          * Initializes the company list with the specified number of companies.
          *

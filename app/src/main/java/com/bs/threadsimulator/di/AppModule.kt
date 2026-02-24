@@ -16,21 +16,15 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideThreadMonitor(): ThreadMonitor {
-        return ThreadMonitor()
-    }
+    fun provideThreadMonitor(): ThreadMonitor = ThreadMonitor()
 
     @Provides
     @Singleton
-    fun provideAppDispatchers(): AppDispatchers {
-        return AppDispatchers()
-    }
+    fun provideAppDispatchers(): AppDispatchers = AppDispatchers()
 
     @Provides
     @Singleton
     fun provideMetricsExporter(
         @ApplicationContext context: Context,
-    ): MetricsExporter {
-        return MetricsExporter(context)
-    }
+    ): MetricsExporter = MetricsExporter(context)
 }

@@ -126,7 +126,8 @@ class CompanyItemTest {
             }
         }
 
-        composeTestRule.onNode(hasAnyDescendant(hasText("AAPL")))
+        composeTestRule
+            .onNode(hasAnyDescendant(hasText("AAPL")))
             .assertExists()
     }
 }

@@ -11,7 +11,9 @@ import javax.inject.Inject
  */
 class FetchStockCurrentPriceUseCase
     @Inject
-    constructor(private val dataRepository: DataRepository) {
+    constructor(
+        private val dataRepository: DataRepository,
+    ) {
         /**
          * Executes the current price fetch operation.
          *

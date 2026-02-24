@@ -41,8 +41,8 @@ class Company(
  * @receiver The CompanyInfo to convert
  * @return A new Company instance with the same data
  */
-fun CompanyInfo.toCompany(): Company {
-    return Company(
+fun CompanyInfo.toCompany(): Company =
+    Company(
         companyName = companyName,
         categoryIndex = categoryIndex,
         peRatio = peRatio,
@@ -57,4 +57,3 @@ fun CompanyInfo.toCompany(): Company {
                 stock.high,
             ),
     )
-}

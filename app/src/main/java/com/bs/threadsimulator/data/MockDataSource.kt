@@ -10,9 +10,11 @@ import kotlin.random.Random
 
 class MockDataSource
     @Inject
-    constructor(private val appDispatchers: AppDispatchers) {
-        private suspend fun generateRandomCompany(index: Int): CompanyInfo {
-            return withContext(appDispatchers.defaultDispatcher) {
+    constructor(
+        private val appDispatchers: AppDispatchers,
+    ) {
+        private suspend fun generateRandomCompany(index: Int): CompanyInfo =
+            withContext(appDispatchers.defaultDispatcher) {
                 val companyNames =
                     listOf(
                         "Apple",
@@ -38,8 +40,26 @@ class MockDataSource
                     )
                 val symbols =
                     listOf(
-                        "AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "PYPL", "INTC", "NFLX",
-                        "ADBE", "CRM", "CSCO", "ORCL", "IBM", "QCOM", "SHOP", "SQ", "TWTR", "SPOT",
+                        "AAPL",
+                        "MSFT",
+                        "AMZN",
+                        "GOOGL",
+                        "META",
+                        "TSLA",
+                        "NVDA",
+                        "PYPL",
+                        "INTC",
+                        "NFLX",
+                        "ADBE",
+                        "CRM",
+                        "CSCO",
+                        "ORCL",
+                        "IBM",
+                        "QCOM",
+                        "SHOP",
+                        "SQ",
+                        "TWTR",
+                        "SPOT",
                     )
                 val categoryIndices = (1..4).toList()
 
@@ -72,13 +92,8 @@ class MockDataSource
                     ),
                 )
             }
-        }
 
-        suspend fun generateCompanies(n: Int): List<CompanyInfo> {
-            return List(n) { generateRandomCompany(it) }
-        }
+        suspend fun generateCompanies(n: Int): List<CompanyInfo> = List(n) { generateRandomCompany(it) }
 
-        fun getCompanyList(): List<CompanyInfo> {
-            return CompanyList.generatedCompanies
-        }
+        fun getCompanyList(): List<CompanyInfo> = CompanyList.generatedCompanies
     }

@@ -21,7 +21,9 @@ sealed class Resource<out T>(
      *
      * @param data The successfully retrieved data
      */
-    class Success<out T>(data: T?) : Resource<T>(data)
+    class Success<out T>(
+        data: T?,
+    ) : Resource<T>(data)
 
     /**
      * Represents a failed operation.
@@ -29,8 +31,10 @@ sealed class Resource<out T>(
      * @param t The exception that caused the failure (optional)
      * @param message A human-readable error message
      */
-    class Error<out T>(t: Throwable? = null, message: String) :
-        Resource<T>(message = message, throwable = t)
+    class Error<out T>(
+        t: Throwable? = null,
+        message: String,
+    ) : Resource<T>(message = message, throwable = t)
 
     /**
      * Represents an ongoing asynchronous operation.
