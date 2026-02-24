@@ -3,6 +3,7 @@ package com.bs.threadsimulator.ui.screens
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
@@ -41,6 +42,7 @@ class HomeViewModelTest {
     private lateinit var fetchPEUseCase: FetchStockPEUseCase
     private lateinit var initCompanyListUseCase: InitCompanyListUseCase
     private lateinit var setUpdateIntervalUseCase: SetUpdateIntervalUseCase
+    private lateinit var exportMetricsUseCase: ExportMetricsUseCase
 
     @Before
     fun setup() {
@@ -52,6 +54,7 @@ class HomeViewModelTest {
         fetchPEUseCase = mockk(relaxed = true)
         initCompanyListUseCase = mockk(relaxed = true)
         setUpdateIntervalUseCase = mockk(relaxed = true)
+        exportMetricsUseCase = mockk(relaxed = true)
 
         every { dataRepository.getCompanyList() } returns emptyList()
 
@@ -65,6 +68,7 @@ class HomeViewModelTest {
                 fetchStockPEUseCase = fetchPEUseCase,
                 setUpdateIntervalUseCase = setUpdateIntervalUseCase,
                 initCompanyListUseCase = initCompanyListUseCase,
+                exportMetricsUseCase = exportMetricsUseCase,
             )
     }
 

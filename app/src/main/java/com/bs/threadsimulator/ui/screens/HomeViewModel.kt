@@ -11,12 +11,14 @@ import com.bs.threadsimulator.common.ThrottleStrategy
 import com.bs.threadsimulator.common.throttleUpdates
 import com.bs.threadsimulator.data.CompanyInfo
 import com.bs.threadsimulator.data.DataRepository
+import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
 import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.model.Company
+import com.bs.threadsimulator.model.ExportedMetrics
 import com.bs.threadsimulator.model.Resource
 import com.bs.threadsimulator.model.toCompany
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,6 +53,7 @@ class HomeViewModel
         private val fetchStockPEUseCase: FetchStockPEUseCase,
         private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
         private val initCompanyListUseCase: InitCompanyListUseCase,
+        private val exportMetricsUseCase: ExportMetricsUseCase,
     ) : ViewModel() {
         /**
          * StateFlow of thread execution metrics.
@@ -274,6 +277,47 @@ class HomeViewModel
         fun stop() {
             Timber.i("Total jobs: %d", jobs.count())
             jobs.forEach { it.cancel() }
+        }
+
+        /**
+         * Exports collected metrics to the specified format.
+         *
+         * Launches the export operation on the IO dispatcher and updates error state.
+         * On success, logs the file path and updates error state with success message.
+         *
+         * @param format Export format: "csv" or "json"
+         */
+        private fun exportMetrics(format: String) {
+            viewModelScope.launch(appDispatchers.ioDispatcher) {
+                when (val result = exportMetricsUseCase.execute(format)) {
+                    is ExportedMetrics.Success -> {
+                        errorMessage.value = "Exported to ${result.fileName}"
+                        Timber.i("Metrics exported to %s: %s", format.uppercase(), result.filePath)
+                    }
+                    is ExportedMetrics.Error -> {
+                        errorMessage.value = "Export failed: ${result.message}"
+                        Timber.e("${format.uppercase()} export failed: %s", result.message)
+                    }
+                }
+            }
+        }
+
+        /**
+         * Exports collected metrics to CSV format.
+         *
+         * Convenience function that delegates to [exportMetrics] with "csv" format.
+         */
+        fun exportMetricsCSV() {
+            exportMetrics("csv")
+        }
+
+        /**
+         * Exports collected metrics to JSON format.
+         *
+         * Convenience function that delegates to [exportMetrics] with "json" format.
+         */
+        fun exportMetricsJSON() {
+            exportMetrics("json")
         }
 
         override fun onCleared() {

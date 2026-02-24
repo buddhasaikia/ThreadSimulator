@@ -16,6 +16,8 @@ ktlint = "12.1.2"
 detekt = "1.23.7"
 # Timber logging
 timber = "5.0.1"
+# Serialization
+kotlinxSerializationJson = "1.7.3"
 # Testing
 mockito = "5.2.0"
 mockk = "1.13.8"
@@ -43,6 +45,8 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 # Timber logging library
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+# Serialization library
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 # Testing libraries
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito" }
@@ -56,5 +60,6 @@ androidx-lifecycle-runtime-testing = { group = "androidx.lifecycle", name = "lif
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

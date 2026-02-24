@@ -107,4 +107,14 @@ class ThreadMonitor
             threadNames.clear()
             _metrics.value = emptyList()
         }
+
+        /**
+         * Gets a snapshot of current metrics for export purposes.
+         *
+         * Thread-safe. Returns a copy of metrics to avoid concurrent modification issues.
+         *
+         * @return A list of current ThreadMetrics
+         */
+        @Synchronized
+        fun getMetricsSnapshot(): List<ThreadMetrics> = _metrics.value.toList()
     }
