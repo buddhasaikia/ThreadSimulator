@@ -20,9 +20,9 @@ import java.math.BigDecimal
  */
 data class Stock(
     val symbol: String = "",
-    val openingPrice: BigDecimal = BigDecimal(0.0),
-    val closingPrice: BigDecimal = BigDecimal(0.0),
-    val low: BigDecimal = BigDecimal(0.0),
-    val high: BigDecimal = BigDecimal(0.0),
-    val currentPrice: BigDecimal = BigDecimal(0.0),
+    val openingPrice: BigDecimal = BigDecimal.ZERO,
+    val closingPrice: BigDecimal = BigDecimal.ZERO,
+    val low: BigDecimal = BigDecimal.ZERO,
+    val high: BigDecimal = BigDecimal.ZERO,
+    val currentPrice: BigDecimal = BigDecimal.ZERO,
 )
