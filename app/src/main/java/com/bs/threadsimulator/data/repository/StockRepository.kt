@@ -69,7 +69,7 @@ interface StockRepository {
     /**
      * Sets the size of the company list to simulate.
      *
-     * @param interval The number of companies to include in simulated data
+     * @param size The number of companies to include in simulated data
      */
-    fun setListSize(interval: Long)
+    fun setListSize(size: Long)
 }
