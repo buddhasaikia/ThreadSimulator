@@ -89,6 +89,10 @@ class DataRepository
 
         override fun getListSize(): Long = listSize
 
+        override suspend fun initCompanyList(size: Int) {
+            mockDataSource.initCompanyList(size)
+        }
+
         /**
          * Fetches and continuously updates the PE ratio for a given stock symbol.
          *
