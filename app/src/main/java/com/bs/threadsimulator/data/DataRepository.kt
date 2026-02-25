@@ -101,10 +101,11 @@ class DataRepository
                         if (index >= 0) {
                             delay(updateIntervalPE)
                             val companyInfo = mockDataSource.getCompanyList()[index]
-                            val updated = companyInfo.copy(
-                                peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}",
-                                threadName = Thread.currentThread().name,
-                            )
+                            val updated =
+                                companyInfo.copy(
+                                    peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}",
+                                    threadName = Thread.currentThread().name,
+                                )
                             val updateTime =
                                 (System.nanoTime() - startTime) / 1_000_000 // Convert to ms
                             threadMonitor.recordUpdate("PE", updateTime)
@@ -139,16 +140,18 @@ class DataRepository
                         if (index >= 0) {
                             delay(updateIntervalCurrentPrice)
                             val companyInfo = mockDataSource.getCompanyList()[index]
-                            val updated = companyInfo.copy(
-                                stock = companyInfo.stock.copy(
-                                    currentPrice =
-                                        (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
-                                            2,
-                                            RoundingMode.HALF_UP,
+                            val updated =
+                                companyInfo.copy(
+                                    stock =
+                                        companyInfo.stock.copy(
+                                            currentPrice =
+                                                (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
+                                                    2,
+                                                    RoundingMode.HALF_UP,
+                                                ),
                                         ),
-                                ),
-                                threadName = Thread.currentThread().name,
-                            )
+                                    threadName = Thread.currentThread().name,
+                                )
                             emit(Resource.Success(updated))
                         } else {
                             emit(Resource.Error(message = "Stock not found"))
@@ -178,21 +181,23 @@ class DataRepository
                         if (index >= 0) {
                             delay(updateIntervalHighLow)
                             val companyInfo = mockDataSource.getCompanyList()[index]
-                            val updated = companyInfo.copy(
-                                stock = companyInfo.stock.copy(
-                                    high =
-                                        (companyInfo.stock.high + BigDecimal(2.0)).setScale(
-                                            2,
-                                            RoundingMode.HALF_UP,
+                            val updated =
+                                companyInfo.copy(
+                                    stock =
+                                        companyInfo.stock.copy(
+                                            high =
+                                                (companyInfo.stock.high + BigDecimal(2.0)).setScale(
+                                                    2,
+                                                    RoundingMode.HALF_UP,
+                                                ),
+                                            low =
+                                                (companyInfo.stock.low + BigDecimal(1.0)).setScale(
+                                                    2,
+                                                    RoundingMode.HALF_UP,
+                                                ),
                                         ),
-                                    low =
-                                        (companyInfo.stock.low + BigDecimal(1.0)).setScale(
-                                            2,
-                                            RoundingMode.HALF_UP,
-                                        ),
-                                ),
-                                threadName = Thread.currentThread().name,
-                            )
+                                    threadName = Thread.currentThread().name,
+                                )
                             emit(Resource.Success(updated))
                         } else {
                             emit(Resource.Error(message = "Stock not found"))
