@@ -2,10 +2,6 @@ package com.bs.threadsimulator.data
 
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
-import com.bs.threadsimulator.data.Constants.listSize
-import com.bs.threadsimulator.data.Constants.updateIntervalCurrentPrice
-import com.bs.threadsimulator.data.Constants.updateIntervalHighLow
-import com.bs.threadsimulator.data.Constants.updateIntervalPE
 import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.model.Resource
 import kotlinx.coroutines.delay
@@ -17,13 +13,6 @@ import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
-
-internal object Constants {
-    var updateIntervalPE = 1500L
-    var updateIntervalHighLow = 1000L
-    var updateIntervalCurrentPrice = 1000L
-    var listSize = 5L
-}
 
 /**
  * Repository for managing stock data and simulating real-time updates across multiple threads.
@@ -42,6 +31,18 @@ class DataRepository
     ) : StockRepository {
         private val startDelay = 0L
 
+        @Volatile
+        private var updateIntervalPE = 1500L
+
+        @Volatile
+        private var updateIntervalHighLow = 1000L
+
+        @Volatile
+        private var updateIntervalCurrentPrice = 1000L
+
+        @Volatile
+        private var listSize = 5L
+
         /**
          * Sets the update interval for PE ratio updates.
          *
@@ -50,6 +51,8 @@ class DataRepository
         override fun setUpdateIntervalPE(interval: Long) {
             updateIntervalPE = interval
         }
+
+        override fun getUpdateIntervalPE(): Long = updateIntervalPE
 
         /**
          * Sets the update interval for high/low price updates.
@@ -60,6 +63,8 @@ class DataRepository
             updateIntervalHighLow = interval
         }
 
+        override fun getUpdateIntervalHighLow(): Long = updateIntervalHighLow
+
         /**
          * Sets the update interval for current price updates.
          *
@@ -68,6 +73,8 @@ class DataRepository
         override fun setUpdateIntervalCurrentPrice(interval: Long) {
             updateIntervalCurrentPrice = interval
         }
+
+        override fun getUpdateIntervalCurrentPrice(): Long = updateIntervalCurrentPrice
 
         /**
          * Sets the size of the company list to simulate.
@@ -79,6 +86,8 @@ class DataRepository
         override fun setListSize(size: Long) {
             listSize = size
         }
+
+        override fun getListSize(): Long = listSize
 
         /**
          * Fetches and continuously updates the PE ratio for a given stock symbol.
