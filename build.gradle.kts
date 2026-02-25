@@ -6,4 +6,5 @@ plugins {
     id("com.google.dagger.hilt.android") version libs.versions.hiltAndroid apply false
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.ksp) apply false
 }

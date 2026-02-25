@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
@@ -68,9 +68,7 @@ android {
             excludes += "/META-INF/LICENSE-notice.md"
         }
     }
-    kapt {
-        correctErrorTypes = true
-    }
+
 
     lint {
         val isCi = System.getenv("CI")?.toBoolean() == true
@@ -99,7 +97,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.timber)
     implementation(libs.kotlinx.serialization.json)
