@@ -3,10 +3,10 @@ package com.bs.threadsimulator.data
 import java.math.BigDecimal
 
 data class StockInfo(
-    var symbol: String = "",
-    var openingPrice: BigDecimal = BigDecimal.ZERO,
-    var closingPrice: BigDecimal = BigDecimal.ZERO,
-    var low: BigDecimal = BigDecimal.ZERO,
-    var high: BigDecimal = BigDecimal.ZERO,
-    var currentPrice: BigDecimal = BigDecimal.ZERO,
+    val symbol: String = "",
+    val openingPrice: BigDecimal = BigDecimal.ZERO,
+    val closingPrice: BigDecimal = BigDecimal.ZERO,
+    val low: BigDecimal = BigDecimal.ZERO,
+    val high: BigDecimal = BigDecimal.ZERO,
+    val currentPrice: BigDecimal = BigDecimal.ZERO,
 )
