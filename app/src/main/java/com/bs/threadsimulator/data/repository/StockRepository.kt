@@ -53,11 +53,25 @@ interface StockRepository {
     fun setUpdateIntervalPE(interval: Long)
 
     /**
+     * Gets the current update interval for PE ratio updates.
+     *
+     * @return The delay in milliseconds between PE ratio updates
+     */
+    fun getUpdateIntervalPE(): Long
+
+    /**
      * Sets the update interval for high/low price updates.
      *
      * @param interval The delay in milliseconds between high/low updates
      */
     fun setUpdateIntervalHighLow(interval: Long)
+
+    /**
+     * Gets the current update interval for high/low price updates.
+     *
+     * @return The delay in milliseconds between high/low updates
+     */
+    fun getUpdateIntervalHighLow(): Long
 
     /**
      * Sets the update interval for current price updates.
@@ -67,9 +81,23 @@ interface StockRepository {
     fun setUpdateIntervalCurrentPrice(interval: Long)
 
     /**
+     * Gets the current update interval for current price updates.
+     *
+     * @return The delay in milliseconds between current price updates
+     */
+    fun getUpdateIntervalCurrentPrice(): Long
+
+    /**
      * Sets the size of the company list to simulate.
      *
      * @param size The number of companies to include in simulated data
      */
     fun setListSize(size: Long)
+
+    /**
+     * Gets the current company list size setting.
+     *
+     * @return The number of companies configured
+     */
+    fun getListSize(): Long
 }

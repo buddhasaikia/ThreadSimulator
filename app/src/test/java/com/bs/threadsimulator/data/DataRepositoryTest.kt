@@ -34,11 +34,11 @@ class DataRepositoryTest {
 
     @After
     fun tearDown() {
-        // Reset Constants to defaults to avoid test interference
-        Constants.updateIntervalPE = 1500L
-        Constants.updateIntervalHighLow = 1000L
-        Constants.updateIntervalCurrentPrice = 1000L
-        Constants.listSize = 5L
+        // Reset intervals to defaults to avoid test interference
+        repository.setUpdateIntervalPE(1500L)
+        repository.setUpdateIntervalHighLow(1000L)
+        repository.setUpdateIntervalCurrentPrice(1000L)
+        repository.setListSize(5L)
     }
 
     @Test
@@ -61,25 +61,25 @@ class DataRepositoryTest {
     @Test
     fun testSetUpdateIntervalPEUpdatesConstant() {
         repository.setUpdateIntervalPE(2000L)
-        assertEquals("PE interval should be updated to 2000", 2000L, Constants.updateIntervalPE)
+        assertEquals("PE interval should be updated to 2000", 2000L, repository.getUpdateIntervalPE())
     }
 
     @Test
     fun testSetUpdateIntervalHighLowUpdatesConstant() {
         repository.setUpdateIntervalHighLow(1500L)
-        assertEquals("HighLow interval should be updated to 1500", 1500L, Constants.updateIntervalHighLow)
+        assertEquals("HighLow interval should be updated to 1500", 1500L, repository.getUpdateIntervalHighLow())
     }
 
     @Test
     fun testSetUpdateIntervalCurrentPriceUpdatesConstant() {
         repository.setUpdateIntervalCurrentPrice(1200L)
-        assertEquals("CurrentPrice interval should be updated to 1200", 1200L, Constants.updateIntervalCurrentPrice)
+        assertEquals("CurrentPrice interval should be updated to 1200", 1200L, repository.getUpdateIntervalCurrentPrice())
     }
 
     @Test
     fun testSetListSizeUpdatesConstant() {
         repository.setListSize(10L)
-        assertEquals("List size should be updated to 10", 10L, Constants.listSize)
+        assertEquals("List size should be updated to 10", 10L, repository.getListSize())
     }
 
     @Test
