@@ -13,6 +13,9 @@ class MockDataSource
     constructor(
         private val appDispatchers: AppDispatchers,
     ) {
+        @Volatile
+        private var generatedCompanies: List<CompanyInfo> = listOf()
+
         private suspend fun generateRandomCompany(index: Int): CompanyInfo =
             withContext(appDispatchers.defaultDispatcher) {
                 val companyNames =
@@ -95,5 +98,9 @@ class MockDataSource
 
         suspend fun generateCompanies(n: Int): List<CompanyInfo> = List(n) { generateRandomCompany(it) }
 
-        fun getCompanyList(): List<CompanyInfo> = CompanyList.generatedCompanies
+        suspend fun initCompanyList(size: Int) {
+            generatedCompanies = generateCompanies(size)
+        }
+
+        fun getCompanyList(): List<CompanyInfo> = generatedCompanies
     }

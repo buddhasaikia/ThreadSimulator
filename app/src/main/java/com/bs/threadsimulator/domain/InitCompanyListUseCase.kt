@@ -1,7 +1,6 @@
 package com.bs.threadsimulator.domain
 
-import com.bs.threadsimulator.common.AppDispatchers
-import com.bs.threadsimulator.data.CompanyList
+import com.bs.threadsimulator.data.repository.StockRepository
 import javax.inject.Inject
 
 /**
@@ -13,7 +12,7 @@ import javax.inject.Inject
 class InitCompanyListUseCase
     @Inject
     constructor(
-        private val appDispatchers: AppDispatchers,
+        private val stockRepository: StockRepository,
     ) {
         /**
          * Initializes the company list with the specified number of companies.
@@ -21,6 +20,6 @@ class InitCompanyListUseCase
          * @param listSize The number of companies to generate (e.g., 5, 10, 50, 100)
          */
         suspend fun execute(listSize: Int) {
-            CompanyList.initCompanyList(listSize, appDispatchers)
+            stockRepository.initCompanyList(listSize)
         }
     }

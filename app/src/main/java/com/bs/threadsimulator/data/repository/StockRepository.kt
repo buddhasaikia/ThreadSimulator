@@ -88,6 +88,13 @@ interface StockRepository {
     fun getUpdateIntervalCurrentPrice(): Long
 
     /**
+     * Initializes the company list with the specified number of companies.
+     *
+     * @param size The number of companies to generate
+     */
+    suspend fun initCompanyList(size: Int)
+
+    /**
      * Sets the size of the company list to simulate.
      *
      * @param size The number of companies to include in simulated data
