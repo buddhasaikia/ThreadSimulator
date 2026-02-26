@@ -23,30 +23,32 @@ import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.ExportedMetrics
 import com.bs.threadsimulator.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 /**
  * ViewModel for managing thread simulation state and multi-threaded data flows.
  *
- * [HomeViewModel] coordinates the execution of concurrent stock data fetch operations,
- * manages throttling strategies based on list size, and aggregates thread execution metrics.
- * It demonstrates real-time multi-threaded data collection via channels and provides
- * comprehensive error handling.
+ * [HomeViewModel] coordinates the execution of concurrent stock data fetch operations, manages
+ * throttling strategies based on list size, and aggregates thread execution metrics. It
+ * demonstrates real-time multi-threaded data collection via channels and provides comprehensive
+ * error handling.
  *
  * Thread Safety: Uses Hilt injection and coroutines for thread-safe state management.
  */
 @HiltViewModel
 class HomeViewModel
-    @Inject
-    constructor(
+@Inject
+constructor(
         private val stockRepository: StockRepository,
         private val threadMonitor: ThreadMonitor,
         private val appDispatchers: AppDispatchers,
@@ -56,78 +58,86 @@ class HomeViewModel
         private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
         private val initCompanyListUseCase: InitCompanyListUseCase,
         private val exportMetricsUseCase: ExportMetricsUseCase,
-    ) : ViewModel() {
-        /**
-         * StateFlow of thread execution metrics.
-         *
-         * Emits real-time updates showing thread IDs, update counts, and average update times
-         * for each data fetch operation (PE, CurrentPrice, HighLow).
-         */
-        val threadMetrics: StateFlow<List<ThreadMetrics>> = threadMonitor.metrics
+) : ViewModel() {
+    /**
+     * StateFlow of thread execution metrics.
+     *
+     * Emits real-time updates showing thread IDs, update counts, and average update times for each
+     * data fetch operation (PE, CurrentPrice, HighLow).
+     */
+    val threadMetrics: StateFlow<List<ThreadMetrics>> = threadMonitor.metrics
 
-        /**
-         * Observable error message state.
-         *
-         * Set when any data fetch operation fails. Consumers can display this message to the user.
-         */
-        val errorMessage = mutableStateOf<String?>(null)
+    /**
+     * Observable error message state.
+     *
+     * Set when any data fetch operation fails. Consumers can display this message to the user.
+     */
+    val errorMessage = mutableStateOf<String?>(null)
 
-        private var currentThrottleStrategy = ThrottleStrategy.NORMAL
-        private val _companyList =
+    private val _isRunning = MutableStateFlow(false)
+
+    /**
+     * Whether the simulation is currently running.
+     *
+     * Exposed as a StateFlow so the UI always reflects the true running state, even when [stop] is
+     * called internally (e.g., from [populateList]).
+     */
+    val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
+
+    private var currentThrottleStrategy = ThrottleStrategy.NORMAL
+    private val _companyList =
             mutableStateListOf<Company>().apply {
                 addAll(stockRepository.getCompanyList().map { it.toCompany() })
             }
 
-        /**
-         * The current list of companies with their stock data.
-         *
-         * Updated in real-time as data arrives from the concurrent fetch operations.
-         * Read-only from outside; mutations happen internally via channel processing.
-         */
-        val companyList: List<Company>
-            get() = _companyList
-        private val jobs = mutableListOf<Job>()
-        private val channel =
+    /**
+     * The current list of companies with their stock data.
+     *
+     * Updated in real-time as data arrives from the concurrent fetch operations. Read-only from
+     * outside; mutations happen internally via channel processing.
+     */
+    val companyList: List<Company>
+        get() = _companyList
+    private val jobs = mutableListOf<Job>()
+    private val channel =
             Channel<CompanyData>(
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-                capacity = 15000,
-                onUndeliveredElement = {
-                    Timber.i("Undelivered: %s", it)
-                },
+                    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+                    capacity = 15000,
+                    onUndeliveredElement = { Timber.i("Undelivered: %s", it) },
             )
 
-        private fun adjustThrottlingForListSize(listSize: Int) {
-            val throttleMs =
+    private fun adjustThrottlingForListSize(listSize: Int) {
+        val throttleMs =
                 when {
                     listSize > 100 -> ThrottleStrategy.RELAXED
                     listSize > 50 -> ThrottleStrategy.NORMAL
                     else -> ThrottleStrategy.RAPID
                 }
-            setUpdateThrottling(throttleMs)
-        }
+        setUpdateThrottling(throttleMs)
+    }
 
-        private fun setUpdateThrottling(strategy: Long) {
-            currentThrottleStrategy = strategy
-            stop()
-            start()
-        }
+    private fun setUpdateThrottling(strategy: Long) {
+        currentThrottleStrategy = strategy
+        stop()
+        start()
+    }
 
-        /**
-         * Sets the update interval for a specific data type.
-         *
-         * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
-         *
-         * @param name The type of update: "PE", "current_price", "high_low", or "list_size"
-         * @param interval The update interval in milliseconds (or count for list_size)
-         *
-         * @see SetUpdateIntervalUseCase
-         */
-        @Deprecated("Use setUpdateInterval(UpdateIntervalType, Long) instead for type safety")
-        fun setUpdateInterval(
+    /**
+     * Sets the update interval for a specific data type.
+     *
+     * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
+     *
+     * @param name The type of update: "PE", "current_price", "high_low", or "list_size"
+     * @param interval The update interval in milliseconds (or count for list_size)
+     *
+     * @see SetUpdateIntervalUseCase
+     */
+    @Deprecated("Use setUpdateInterval(UpdateIntervalType, Long) instead for type safety")
+    fun setUpdateInterval(
             name: String,
             interval: Long,
-        ) {
-            val intervalType =
+    ) {
+        val intervalType =
                 when (name) {
                     "PE" -> UpdateIntervalType.PE
                     "current_price" -> UpdateIntervalType.CURRENT_PRICE
@@ -135,74 +145,73 @@ class HomeViewModel
                     "list_size" -> UpdateIntervalType.LIST_SIZE
                     else -> return // Ignore unknown types
                 }
-            setUpdateInterval(intervalType, interval)
-        }
+        setUpdateInterval(intervalType, interval)
+    }
 
-        /**
-         * Sets the update interval for a specific data type using type-safe enum.
-         *
-         * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
-         *
-         * @param intervalType The type of configuration to update
-         * @param interval The update interval in milliseconds (or count for LIST_SIZE)
-         *
-         * @see SetUpdateIntervalUseCase
-         */
-        fun setUpdateInterval(
+    /**
+     * Sets the update interval for a specific data type using type-safe enum.
+     *
+     * Executes on the IO dispatcher to prevent blocking. Changes take effect immediately.
+     *
+     * @param intervalType The type of configuration to update
+     * @param interval The update interval in milliseconds (or count for LIST_SIZE)
+     *
+     * @see SetUpdateIntervalUseCase
+     */
+    fun setUpdateInterval(
             intervalType: UpdateIntervalType,
             interval: Long,
-        ) {
-            viewModelScope.launch {
-                setUpdateIntervalUseCase.execute(intervalType, interval)
-            }
-        }
+    ) {
+        viewModelScope.launch { setUpdateIntervalUseCase.execute(intervalType, interval) }
+    }
 
-        /**
-         * Populates the company list with the specified number of companies.
-         *
-         * Automatically adjusts throttling strategy based on list size for optimal performance.
-         * Clears accumulated metrics before starting a new simulation.
-         * Updates the UI state with the new list of companies.
-         *
-         * @param listSize The number of companies to simulate
-         *
-         * @see InitCompanyListUseCase
-         * @see adjustThrottlingForListSize
-         */
-        fun populateList(listSize: Int) {
-            viewModelScope.launch {
-                // Ensure all previous jobs are cancelled so they can't emit metrics into the new run.
-                stop()
-                threadMonitor.clearMetrics()
-                adjustThrottlingForListSize(listSize)
-                initCompanyListUseCase.execute(listSize)
-                _companyList.clear()
-                _companyList.addAll(stockRepository.getCompanyList().map { it.toCompany() })
-            }
+    /**
+     * Populates the company list with the specified number of companies.
+     *
+     * Automatically adjusts throttling strategy based on list size for optimal performance. Clears
+     * accumulated metrics before starting a new simulation. Updates the UI state with the new list
+     * of companies.
+     *
+     * @param listSize The number of companies to simulate
+     *
+     * @see InitCompanyListUseCase
+     * @see adjustThrottlingForListSize
+     */
+    fun populateList(listSize: Int) {
+        viewModelScope.launch {
+            // Ensure all previous jobs are cancelled so they can't emit metrics into the new run.
+            stop()
+            threadMonitor.clearMetrics()
+            adjustThrottlingForListSize(listSize)
+            initCompanyListUseCase.execute(listSize)
+            _companyList.clear()
+            _companyList.addAll(stockRepository.getCompanyList().map { it.toCompany() })
         }
+    }
 
-        /**
-         * Starts all concurrent data fetch operations.
-         *
-         * Initializes the channel listener and launches three concurrent collection tasks
-         * (PE, CurrentPrice, HighLow) for each company in the list. Each task runs on the IO dispatcher.
-         *
-         * Thread Safety: Safe to call multiple times; subsequent calls will launch additional jobs.
-         * Call [stop] before starting again to avoid duplicate jobs.
-         *
-         * @see stop
-         */
-        fun start() {
-            initChannel(channel)
-            stockRepository.getCompanyList().forEach {
-                fetchCurrentPrice(it.stock.symbol)
-                fetchHighLow(it.stock.symbol)
-                fetchStockPE(it.stock.symbol)
-            }
+    /**
+     * Starts all concurrent data fetch operations.
+     *
+     * Initializes the channel listener and launches three concurrent collection tasks (PE,
+     * CurrentPrice, HighLow) for each company in the list. Each task runs on the IO dispatcher.
+     *
+     * Thread Safety: Safe to call multiple times; subsequent calls will launch additional jobs.
+     * Call [stop] before starting again to avoid duplicate jobs.
+     *
+     * @see stop
+     */
+    fun start() {
+        _isRunning.value = true
+        initChannel(channel)
+        stockRepository.getCompanyList().forEach {
+            fetchCurrentPrice(it.stock.symbol)
+            fetchHighLow(it.stock.symbol)
+            fetchStockPE(it.stock.symbol)
         }
+    }
 
-        private fun fetchStockPE(symbol: String) {
-            jobs.add(
+    private fun fetchStockPE(symbol: String) {
+        jobs.add(
                 viewModelScope.launch(appDispatchers.ioDispatcher) {
                     fetchStockPEUseCase.execute(symbol).collect { resource ->
                         ensureActive()
@@ -211,47 +220,43 @@ class HomeViewModel
                                 if (resource.data == null) return@collect
                                 channel.send(resource.data)
                             }
-
                             is Resource.Error -> {
                                 Timber.e("PE fetch failed: %s", resource.message)
                                 errorMessage.value = resource.message
                             }
-
                             else -> {}
                         }
                     }
                 },
-            )
-        }
+        )
+    }
 
-        private fun fetchCurrentPrice(symbol: String) {
-            jobs.add(
+    private fun fetchCurrentPrice(symbol: String) {
+        jobs.add(
                 viewModelScope.launch(appDispatchers.ioDispatcher) {
                     fetchStockCurrentPriceUseCase
-                        .execute(symbol)
-                        .throttleUpdates(currentThrottleStrategy)
-                        .collect { resource ->
-                            ensureActive()
-                            when (resource) {
-                                is Resource.Success -> {
-                                    if (resource.data == null) return@collect
-                                    channel.send(resource.data)
+                            .execute(symbol)
+                            .throttleUpdates(currentThrottleStrategy)
+                            .collect { resource ->
+                                ensureActive()
+                                when (resource) {
+                                    is Resource.Success -> {
+                                        if (resource.data == null) return@collect
+                                        channel.send(resource.data)
+                                    }
+                                    is Resource.Error -> {
+                                        Timber.e("Current price fetch failed: %s", resource.message)
+                                        errorMessage.value = resource.message
+                                    }
+                                    else -> {}
                                 }
-
-                                is Resource.Error -> {
-                                    Timber.e("Current price fetch failed: %s", resource.message)
-                                    errorMessage.value = resource.message
-                                }
-
-                                else -> {}
                             }
-                        }
                 },
-            )
-        }
+        )
+    }
 
-        private fun fetchHighLow(symbol: String) {
-            jobs.add(
+    private fun fetchHighLow(symbol: String) {
+        jobs.add(
                 viewModelScope.launch(appDispatchers.ioDispatcher) {
                     fetchStockHighLowUseCase.execute(symbol).collect { resource ->
                         ensureActive()
@@ -260,97 +265,96 @@ class HomeViewModel
                                 if (resource.data == null) return@collect
                                 channel.send(resource.data)
                             }
-
                             is Resource.Error -> {
                                 Timber.e("High/Low fetch failed: %s", resource.message)
                                 errorMessage.value = resource.message
                             }
-
                             else -> {}
                         }
                     }
                 },
-            )
-        }
+        )
+    }
 
-        private fun initChannel(channel: ReceiveChannel<CompanyData>) {
-            viewModelScope.launch(appDispatchers.mainDispatcher) {
-                try {
-                    for (companyData in channel) {
-                        ensureActive()
-                        val company = _companyList.getOrNull(companyData.id) ?: continue
-                        try {
-                            company.updateFromDomain(companyData)
-                        } catch (e: Exception) {
-                            Timber.e(e, "Failed to apply update: %s", e.message)
-                            errorMessage.value = "Failed to update UI"
-                        }
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Channel processing failed: %s", e.message)
-                    errorMessage.value = "Internal processing error"
-                }
-            }
-        }
-
-        /**
-         * Stops all concurrent data fetch operations.
-         *
-         * Cancels all active jobs, halting data collection. Thread metrics up to cancellation
-         * are preserved and can still be observed. Safe to call multiple times.
-         *
-         * @see start
-         */
-        fun stop() {
-            Timber.i("Total jobs: %d", jobs.count())
-            jobs.forEach { it.cancel() }
-            jobs.clear()
-        }
-
-        /**
-         * Exports collected metrics to the specified format.
-         *
-         * Launches the export operation on the IO dispatcher and updates error state.
-         * On success, logs the file path and updates error state with success message.
-         *
-         * @param format Export format: "csv" or "json"
-         */
-        private fun exportMetrics(format: String) {
-            viewModelScope.launch(appDispatchers.ioDispatcher) {
-                when (val result = exportMetricsUseCase.execute(format)) {
-                    is ExportedMetrics.Success -> {
-                        errorMessage.value = "Exported to ${result.fileName}"
-                        Timber.i("Metrics exported to %s: %s", format.uppercase(), result.filePath)
-                    }
-                    is ExportedMetrics.Error -> {
-                        errorMessage.value = "Export failed: ${result.message}"
-                        Timber.e("${format.uppercase()} export failed: %s", result.message)
+    private fun initChannel(channel: ReceiveChannel<CompanyData>) {
+        viewModelScope.launch(appDispatchers.mainDispatcher) {
+            try {
+                for (companyData in channel) {
+                    ensureActive()
+                    val company = _companyList.getOrNull(companyData.id) ?: continue
+                    try {
+                        company.updateFromDomain(companyData)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to apply update: %s", e.message)
+                        errorMessage.value = "Failed to update UI"
                     }
                 }
+            } catch (e: Exception) {
+                Timber.e(e, "Channel processing failed: %s", e.message)
+                errorMessage.value = "Internal processing error"
             }
-        }
-
-        /**
-         * Exports collected metrics to CSV format.
-         *
-         * Convenience function that delegates to [exportMetrics] with "csv" format.
-         */
-        fun exportMetricsCSV() {
-            exportMetrics("csv")
-        }
-
-        /**
-         * Exports collected metrics to JSON format.
-         *
-         * Convenience function that delegates to [exportMetrics] with "json" format.
-         */
-        fun exportMetricsJSON() {
-            exportMetrics("json")
-        }
-
-        override fun onCleared() {
-            super.onCleared()
-            stop()
-            channel.close()
         }
     }
+
+    /**
+     * Stops all concurrent data fetch operations.
+     *
+     * Cancels all active jobs, halting data collection. Thread metrics up to cancellation are
+     * preserved and can still be observed. Safe to call multiple times.
+     *
+     * @see start
+     */
+    fun stop() {
+        _isRunning.value = false
+        Timber.i("Total jobs: %d", jobs.count())
+        jobs.forEach { it.cancel() }
+        jobs.clear()
+    }
+
+    /**
+     * Exports collected metrics to the specified format.
+     *
+     * Launches the export operation on the IO dispatcher and updates error state. On success, logs
+     * the file path and updates error state with success message.
+     *
+     * @param format Export format: "csv" or "json"
+     */
+    private fun exportMetrics(format: String) {
+        viewModelScope.launch(appDispatchers.ioDispatcher) {
+            when (val result = exportMetricsUseCase.execute(format)) {
+                is ExportedMetrics.Success -> {
+                    errorMessage.value = "Exported to ${result.fileName}"
+                    Timber.i("Metrics exported to %s: %s", format.uppercase(), result.filePath)
+                }
+                is ExportedMetrics.Error -> {
+                    errorMessage.value = "Export failed: ${result.message}"
+                    Timber.e("${format.uppercase()} export failed: %s", result.message)
+                }
+            }
+        }
+    }
+
+    /**
+     * Exports collected metrics to CSV format.
+     *
+     * Convenience function that delegates to [exportMetrics] with "csv" format.
+     */
+    fun exportMetricsCSV() {
+        exportMetrics("csv")
+    }
+
+    /**
+     * Exports collected metrics to JSON format.
+     *
+     * Convenience function that delegates to [exportMetrics] with "json" format.
+     */
+    fun exportMetricsJSON() {
+        exportMetrics("json")
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stop()
+        channel.close()
+    }
+}
