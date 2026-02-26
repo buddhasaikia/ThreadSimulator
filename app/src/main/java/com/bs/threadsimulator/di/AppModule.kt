@@ -2,6 +2,7 @@ package com.bs.threadsimulator.di
 
 import android.content.Context
 import com.bs.threadsimulator.common.AppDispatchers
+import com.bs.threadsimulator.common.DefaultAppDispatchers
 import com.bs.threadsimulator.common.MetricsExporter
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.data.DataRepository
@@ -23,7 +24,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppDispatchers(): AppDispatchers = AppDispatchers()
+    fun provideAppDispatchers(): AppDispatchers = DefaultAppDispatchers()
 
     @Provides
     @Singleton

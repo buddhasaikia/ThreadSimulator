@@ -1,23 +1,27 @@
 package com.bs.threadsimulator.data
 
-import com.bs.threadsimulator.common.AppDispatchers
+import com.bs.threadsimulator.common.TestAppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DataRepositoryTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: DataRepository
     private lateinit var mockDataSource: MockDataSource
-    private lateinit var appDispatchers: AppDispatchers
+    private lateinit var appDispatchers: TestAppDispatchers
     private lateinit var threadMonitor: ThreadMonitor
 
     @Before
     fun setup() {
-        mockDataSource = MockDataSource(AppDispatchers())
-        appDispatchers = AppDispatchers()
+        appDispatchers = TestAppDispatchers(testDispatcher)
+        mockDataSource = MockDataSource(appDispatchers)
         threadMonitor = ThreadMonitor()
 
         repository =
@@ -27,7 +31,7 @@ class DataRepositoryTest {
                 threadMonitor = threadMonitor,
             )
 
-        runBlocking {
+        runTest(testDispatcher) {
             mockDataSource.initCompanyList(5)
         }
     }
