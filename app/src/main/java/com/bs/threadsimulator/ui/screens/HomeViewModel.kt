@@ -304,6 +304,7 @@ class HomeViewModel
         fun stop() {
             Timber.i("Total jobs: %d", jobs.count())
             jobs.forEach { it.cancel() }
+            jobs.clear()
         }
 
         /**
