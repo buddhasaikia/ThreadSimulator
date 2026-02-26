@@ -49,172 +49,172 @@ import com.bs.threadsimulator.utils.InputValidator
 
 @Composable
 fun HomeScreenRoute(
-        innerPadding: PaddingValues,
-        homeViewModel: HomeViewModel = hiltViewModel(),
+    innerPadding: PaddingValues,
+    homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
     val threadMetrics by homeViewModel.threadMetrics.collectAsState()
     val isRunning by homeViewModel.isRunning.collectAsState()
     val errorMessage = homeViewModel.errorMessage.value
 
     HomeScreen(
-            innerPadding,
-            homeViewModel.companyList,
-            threadMetrics = threadMetrics,
-            isRunning = isRunning,
-            errorMessage = errorMessage,
-            populateList = { homeViewModel.populateList(it) },
-            onStart = { homeViewModel.start() },
-            onStop = { homeViewModel.stop() },
-            onSetUpdateInterval = { updateIntervalType, interval ->
-                homeViewModel.setUpdateInterval(updateIntervalType, interval)
-            },
-            onExportCSV = { homeViewModel.exportMetricsCSV() },
-            onExportJSON = { homeViewModel.exportMetricsJSON() },
+        innerPadding,
+        homeViewModel.companyList,
+        threadMetrics = threadMetrics,
+        isRunning = isRunning,
+        errorMessage = errorMessage,
+        populateList = { homeViewModel.populateList(it) },
+        onStart = { homeViewModel.start() },
+        onStop = { homeViewModel.stop() },
+        onSetUpdateInterval = { updateIntervalType, interval ->
+            homeViewModel.setUpdateInterval(updateIntervalType, interval)
+        },
+        onExportCSV = { homeViewModel.exportMetricsCSV() },
+        onExportJSON = { homeViewModel.exportMetricsJSON() },
     )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
-        innerPadding: PaddingValues,
-        companyList: List<Company>,
-        threadMetrics: List<ThreadMetrics>,
-        isRunning: Boolean,
-        errorMessage: String?,
-        onSetUpdateInterval: (UpdateIntervalType, Long) -> Unit,
-        populateList: (Int) -> Unit,
-        onStart: () -> Unit,
-        onStop: () -> Unit,
-        onExportCSV: () -> Unit,
-        onExportJSON: () -> Unit,
+    innerPadding: PaddingValues,
+    companyList: List<Company>,
+    threadMetrics: List<ThreadMetrics>,
+    isRunning: Boolean,
+    errorMessage: String?,
+    onSetUpdateInterval: (UpdateIntervalType, Long) -> Unit,
+    populateList: (Int) -> Unit,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
+    onExportCSV: () -> Unit,
+    onExportJSON: () -> Unit,
 ) {
     Column(
-            modifier = Modifier.padding(innerPadding).fillMaxWidth().fillMaxHeight(),
+        modifier = Modifier.padding(innerPadding).fillMaxWidth().fillMaxHeight(),
     ) {
         if (errorMessage != null) {
             Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         Text(
-                text = "Total workers:${threadMetrics.count()}",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp),
+            text = "Total workers:${threadMetrics.count()}",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         // Add thread metrics display
         ThreadMetricsDisplay(threadMetrics)
 
         Text(
-                text = "Set update intervals below (Milliseconds):",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp),
+            text = "Set update intervals below (Milliseconds):",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Top,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Top,
         ) {
             var peUpdateIntervalInMs by remember { mutableStateOf("1500") }
             var peError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
-                    label = "PE (ms)",
-                    value = peUpdateIntervalInMs,
-                    onValueChange = { value ->
-                        peUpdateIntervalInMs = value
-                        val result = InputValidator.validateInterval(value)
-                        peError = result.exceptionOrNull()?.message
-                        result.onSuccess { interval ->
-                            onSetUpdateInterval(UpdateIntervalType.PE, interval)
-                        }
-                    },
-                    modifier = Modifier.weight(2f).padding(start = 8.dp, end = 8.dp),
-                    isError = peError != null,
-                    errorMessage = peError,
+                label = "PE (ms)",
+                value = peUpdateIntervalInMs,
+                onValueChange = { value ->
+                    peUpdateIntervalInMs = value
+                    val result = InputValidator.validateInterval(value)
+                    peError = result.exceptionOrNull()?.message
+                    result.onSuccess { interval ->
+                        onSetUpdateInterval(UpdateIntervalType.PE, interval)
+                    }
+                },
+                modifier = Modifier.weight(2f).padding(start = 8.dp, end = 8.dp),
+                isError = peError != null,
+                errorMessage = peError,
             )
             var currentPriceUpdateIntervalInMs by remember { mutableStateOf("1000") }
             var priceError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
-                    label = "Price (ms)",
-                    value = currentPriceUpdateIntervalInMs,
-                    onValueChange = { value ->
-                        currentPriceUpdateIntervalInMs = value
-                        val result = InputValidator.validateInterval(value)
-                        priceError = result.exceptionOrNull()?.message
-                        result.onSuccess { interval ->
-                            onSetUpdateInterval(UpdateIntervalType.CURRENT_PRICE, interval)
-                        }
-                    },
-                    modifier = Modifier.weight(2f).padding(end = 8.dp),
-                    isError = priceError != null,
-                    errorMessage = priceError,
+                label = "Price (ms)",
+                value = currentPriceUpdateIntervalInMs,
+                onValueChange = { value ->
+                    currentPriceUpdateIntervalInMs = value
+                    val result = InputValidator.validateInterval(value)
+                    priceError = result.exceptionOrNull()?.message
+                    result.onSuccess { interval ->
+                        onSetUpdateInterval(UpdateIntervalType.CURRENT_PRICE, interval)
+                    }
+                },
+                modifier = Modifier.weight(2f).padding(end = 8.dp),
+                isError = priceError != null,
+                errorMessage = priceError,
             )
             var highLowUpdateIntervalInMs by remember { mutableStateOf("1000") }
             var highLowError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
-                    label = "High/Low (ms)",
-                    value = highLowUpdateIntervalInMs,
-                    onValueChange = { value ->
-                        highLowUpdateIntervalInMs = value
-                        val result = InputValidator.validateInterval(value)
-                        highLowError = result.exceptionOrNull()?.message
-                        result.onSuccess { interval ->
-                            onSetUpdateInterval(UpdateIntervalType.HIGH_LOW, interval)
-                        }
-                    },
-                    modifier = Modifier.weight(2f).padding(end = 8.dp),
-                    isError = highLowError != null,
-                    errorMessage = highLowError,
+                label = "High/Low (ms)",
+                value = highLowUpdateIntervalInMs,
+                onValueChange = { value ->
+                    highLowUpdateIntervalInMs = value
+                    val result = InputValidator.validateInterval(value)
+                    highLowError = result.exceptionOrNull()?.message
+                    result.onSuccess { interval ->
+                        onSetUpdateInterval(UpdateIntervalType.HIGH_LOW, interval)
+                    }
+                },
+                modifier = Modifier.weight(2f).padding(end = 8.dp),
+                isError = highLowError != null,
+                errorMessage = highLowError,
             )
         }
         val keyboardController = LocalSoftwareKeyboardController.current
         val focusManager = LocalFocusManager.current
         Row(
-                modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             var listSize by remember { mutableStateOf("5") }
             var listSizeError by remember { mutableStateOf<String?>(null) }
             IntervalInput(
-                    label = "List Size",
-                    value = listSize,
-                    onValueChange = { value ->
-                        listSize = value
-                        val result = InputValidator.validateListSize(value)
-                        listSizeError = result.exceptionOrNull()?.message
-                    },
-                    modifier = Modifier.padding(end = 10.dp).weight(2f),
-                    isError = listSizeError != null,
-                    errorMessage = listSizeError,
+                label = "List Size",
+                value = listSize,
+                onValueChange = { value ->
+                    listSize = value
+                    val result = InputValidator.validateListSize(value)
+                    listSizeError = result.exceptionOrNull()?.message
+                },
+                modifier = Modifier.padding(end = 10.dp).weight(2f),
+                isError = listSizeError != null,
+                errorMessage = listSizeError,
             )
             Button(
-                    shape = RoundedCornerShape(4.dp),
-                    onClick = {
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        val result = InputValidator.validateListSize(listSize)
-                        result.onSuccess { size -> populateList(size) }
-                    },
-                    modifier = Modifier.height(60.dp).padding(top = 4.dp, end = 8.dp).weight(2f),
+                shape = RoundedCornerShape(4.dp),
+                onClick = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    val result = InputValidator.validateListSize(listSize)
+                    result.onSuccess { size -> populateList(size) }
+                },
+                modifier = Modifier.height(60.dp).padding(top = 4.dp, end = 8.dp).weight(2f),
             ) { Text("Populate", fontSize = 16.sp) }
             Button(
-                    shape = RoundedCornerShape(4.dp),
-                    onClick = {
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        if (isRunning) {
-                            onStop()
-                        } else {
-                            onStart()
-                        }
-                    },
-                    modifier = Modifier.height(60.dp).padding(top = 4.dp).weight(2f),
+                shape = RoundedCornerShape(4.dp),
+                onClick = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    if (isRunning) {
+                        onStop()
+                    } else {
+                        onStart()
+                    }
+                },
+                modifier = Modifier.height(60.dp).padding(top = 4.dp).weight(2f),
             ) {
                 if (isRunning) {
                     Text("Stop", fontSize = 16.sp)
@@ -224,33 +224,33 @@ fun HomeScreen(
             }
         }
         Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Button(
-                    shape = RoundedCornerShape(4.dp),
-                    onClick = onExportCSV,
-                    modifier = Modifier.height(48.dp).weight(1f).padding(end = 4.dp),
+                shape = RoundedCornerShape(4.dp),
+                onClick = onExportCSV,
+                modifier = Modifier.height(48.dp).weight(1f).padding(end = 4.dp),
             ) { Text("Export CSV", fontSize = 14.sp) }
             Button(
-                    shape = RoundedCornerShape(4.dp),
-                    onClick = onExportJSON,
-                    modifier = Modifier.height(48.dp).weight(1f).padding(start = 4.dp),
+                shape = RoundedCornerShape(4.dp),
+                onClick = onExportJSON,
+                modifier = Modifier.height(48.dp).weight(1f).padding(start = 4.dp),
             ) { Text("Export JSON", fontSize = 14.sp) }
         }
         LazyColumn(modifier = Modifier.padding(horizontal = 8.dp)) {
             items(
-                    items = companyList,
-                    // Stable key for better recomposition
-                    key = { it.stock.symbol },
-                    // Help Compose optimize similar items
-                    contentType = { it.categoryIndex },
+                items = companyList,
+                // Stable key for better recomposition
+                key = { it.stock.symbol },
+                // Help Compose optimize similar items
+                contentType = { it.categoryIndex },
             ) { company ->
                 CompanyItem(
-                        company = company,
-                        // Removed animateItemPlacement for compatibility
-                        modifier = Modifier.animateItem(),
+                    company = company,
+                    // Removed animateItemPlacement for compatibility
+                    modifier = Modifier.animateItem(),
                 )
                 HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
             }
@@ -263,30 +263,30 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
     if (threadMetrics.isEmpty()) return
 
     LazyRow(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
     ) {
         items(threadMetrics) { metric ->
             Card(
-                    modifier = Modifier.padding(4.dp).width(200.dp),
+                modifier = Modifier.padding(4.dp).width(200.dp),
             ) {
                 Column(
-                        modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(8.dp),
                 ) {
                     Text(
-                            text = "Thread: ${metric.threadName}",
-                            style = MaterialTheme.typography.bodyMedium,
+                        text = "Thread: ${metric.threadName}",
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
-                            text = "Type: ${metric.updateType}",
-                            style = MaterialTheme.typography.bodySmall,
+                        text = "Type: ${metric.updateType}",
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                            text = "Updates: ${metric.updateCount}",
-                            style = MaterialTheme.typography.bodySmall,
+                        text = "Updates: ${metric.updateCount}",
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                            text = "Avg Time: ${metric.avgUpdateTimeMs}ms",
-                            style = MaterialTheme.typography.bodySmall,
+                        text = "Avg Time: ${metric.avgUpdateTimeMs}ms",
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
@@ -299,20 +299,20 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
 fun StockListPreview() {
     ThreadSimulatorTheme {
         HomeScreen(
-                PaddingValues(2.dp),
-                companyList =
-                        MockDataSource(DefaultAppDispatchers()).getCompanyList().map {
-                            it.toCompany()
-                        },
-                threadMetrics = listOf(),
-                isRunning = false,
-                errorMessage = null,
-                populateList = {},
-                onSetUpdateInterval = { _, _ -> },
-                onStart = {},
-                onStop = {},
-                onExportCSV = {},
-                onExportJSON = {},
+            PaddingValues(2.dp),
+            companyList =
+                MockDataSource(DefaultAppDispatchers()).getCompanyList().map {
+                    it.toCompany()
+                },
+            threadMetrics = listOf(),
+            isRunning = false,
+            errorMessage = null,
+            populateList = {},
+            onSetUpdateInterval = { _, _ -> },
+            onStart = {},
+            onStop = {},
+            onExportCSV = {},
+            onExportJSON = {},
         )
     }
 }
