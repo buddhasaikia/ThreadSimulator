@@ -69,7 +69,6 @@ android {
         }
     }
 
-
     lint {
         val isCi = System.getenv("CI")?.toBoolean() == true
         abortOnError = isCi
