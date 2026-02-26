@@ -1,5 +1,6 @@
 package com.bs.threadsimulator.ui.screens
 
+import com.bs.threadsimulator.common.ChannelConfig
 import com.bs.threadsimulator.common.TestAppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.data.repository.StockRepository
@@ -70,6 +71,7 @@ class HomeViewModelTest {
                 setUpdateIntervalUseCase = setUpdateIntervalUseCase,
                 initCompanyListUseCase = initCompanyListUseCase,
                 exportMetricsUseCase = exportMetricsUseCase,
+                channelConfig = ChannelConfig(),
             )
     }
 

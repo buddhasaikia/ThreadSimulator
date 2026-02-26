@@ -2,6 +2,7 @@ package com.bs.threadsimulator.di
 
 import android.content.Context
 import com.bs.threadsimulator.common.AppDispatchers
+import com.bs.threadsimulator.common.ChannelConfig
 import com.bs.threadsimulator.common.DefaultAppDispatchers
 import com.bs.threadsimulator.common.MetricsExporter
 import com.bs.threadsimulator.common.ThreadMonitor
@@ -25,6 +26,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAppDispatchers(): AppDispatchers = DefaultAppDispatchers()
+
+    @Provides
+    @Singleton
+    fun provideChannelConfig(): ChannelConfig = ChannelConfig()
 
     @Provides
     @Singleton

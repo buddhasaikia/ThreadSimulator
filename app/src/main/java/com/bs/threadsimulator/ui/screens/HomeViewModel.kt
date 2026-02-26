@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bs.threadsimulator.common.AppDispatchers
+import com.bs.threadsimulator.common.ChannelConfig
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.common.ThrottleStrategy
@@ -24,11 +25,13 @@ import com.bs.threadsimulator.model.ExportedMetrics
 import com.bs.threadsimulator.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -56,6 +59,7 @@ class HomeViewModel
         private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
         private val initCompanyListUseCase: InitCompanyListUseCase,
         private val exportMetricsUseCase: ExportMetricsUseCase,
+        private val channelConfig: ChannelConfig,
     ) : ViewModel() {
         /**
          * StateFlow of thread execution metrics.
@@ -87,11 +91,23 @@ class HomeViewModel
         val companyList: List<Company>
             get() = _companyList
         private val jobs = mutableListOf<Job>()
+
+        private val _droppedElementCount = MutableStateFlow(0L)
+
+        /**
+         * Observable count of elements dropped due to channel buffer overflow.
+         *
+         * Increments each time the [ChannelConfig.onBufferOverflow] strategy discards an element.
+         * Useful for monitoring back-pressure and tuning [ChannelConfig.capacity].
+         */
+        val droppedElementCount: StateFlow<Long> = _droppedElementCount.asStateFlow()
+
         private val channel =
             Channel<CompanyData>(
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-                capacity = 15000,
+                capacity = channelConfig.capacity,
+                onBufferOverflow = channelConfig.onBufferOverflow,
                 onUndeliveredElement = {
+                    _droppedElementCount.update { it + 1 }
                     Timber.i("Undelivered: %s", it)
                 },
             )
