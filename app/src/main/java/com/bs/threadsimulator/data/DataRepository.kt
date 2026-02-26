@@ -149,6 +149,7 @@ class DataRepository
                     emit(Resource.Loading())
                     delay(startDelay)
                     while (true) {
+                        val startTime = System.nanoTime()
                         val index = getCompanyIndex(symbol)
                         if (index >= 0) {
                             delay(updateIntervalCurrentPrice)
@@ -165,6 +166,9 @@ class DataRepository
                                         ),
                                     threadName = Thread.currentThread().name,
                                 )
+                            val updateTime =
+                                (System.nanoTime() - startTime) / 1_000_000 // Convert to ms
+                            threadMonitor.recordUpdate("CurrentPrice", updateTime)
                             emit(Resource.Success(updated))
                         } else {
                             emit(Resource.Error(message = "Stock not found"))
