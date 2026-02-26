@@ -1,18 +1,22 @@
 package com.bs.threadsimulator.data
 
-import com.bs.threadsimulator.common.AppDispatchers
-import kotlinx.coroutines.runBlocking
+import com.bs.threadsimulator.common.TestAppDispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MockDataSourceTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var mockDataSource: MockDataSource
 
     @Before
     fun setup() {
-        mockDataSource = MockDataSource(AppDispatchers())
-        runBlocking {
+        mockDataSource = MockDataSource(TestAppDispatchers(testDispatcher))
+        runTest(testDispatcher) {
             mockDataSource.initCompanyList(5)
         }
     }
@@ -40,7 +44,7 @@ class MockDataSourceTest {
 
     @Test
     fun testGenerateCompaniesReturnsCorrectCount() =
-        runBlocking {
+        runTest(testDispatcher) {
             val count = 5
             val companies = mockDataSource.generateCompanies(count)
             assertEquals(count, companies.size)
@@ -48,7 +52,7 @@ class MockDataSourceTest {
 
     @Test
     fun testGeneratedCompaniesHaveValidSymbolFormat() =
-        runBlocking {
+        runTest(testDispatcher) {
             val companies = mockDataSource.generateCompanies(5)
             companies.forEachIndexed { index, company ->
                 val symbol = company.stock.symbol
@@ -64,7 +68,7 @@ class MockDataSourceTest {
 
     @Test
     fun testGeneratedCompaniesHaveValidPrices() =
-        runBlocking {
+        runTest(testDispatcher) {
             val companies = mockDataSource.generateCompanies(5)
             companies.forEach { company ->
                 val high = company.stock.high.toDouble()
@@ -88,7 +92,7 @@ class MockDataSourceTest {
 
     @Test
     fun testGeneratedCompaniesHaveValidPERatio() =
-        runBlocking {
+        runTest(testDispatcher) {
             val companies = mockDataSource.generateCompanies(5)
             companies.forEach { company ->
                 val pe = company.peRatio.toDouble()
@@ -108,7 +112,7 @@ class MockDataSourceTest {
 
     @Test
     fun testGenerateCompaniesWithLargeCount() =
-        runBlocking {
+        runTest(testDispatcher) {
             val companies = mockDataSource.generateCompanies(10)
             assertEquals(10, companies.size)
             companies.forEach { company ->
@@ -118,7 +122,7 @@ class MockDataSourceTest {
 
     @Test
     fun testGeneratedCompaniesHaveUniqueIndices() =
-        runBlocking {
+        runTest(testDispatcher) {
             val companies = mockDataSource.generateCompanies(5)
             val indices = companies.map { it.id }
             assertEquals("All company IDs should be unique", 5, indices.distinct().size)

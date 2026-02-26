@@ -9,24 +9,22 @@ import kotlinx.coroutines.Dispatchers
  * Centralizes dispatcher configuration, making it easy to swap implementations for testing
  * or to apply custom dispatcher policies application-wide.
  */
-class AppDispatchers {
-    /**
-     * Dispatcher for I/O operations.
-     *
-     * Used for network requests, database operations, and other I/O-heavy tasks.
-     * Runs on a pool of threads optimized for blocking I/O operations.
-     */
-    val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+interface AppDispatchers {
+    /** Dispatcher for I/O operations (network, database, file I/O). */
+    val ioDispatcher: CoroutineDispatcher
 
-    /**
-     * Dispatcher for CPU-intensive computations.
-     *
-     * Used for tasks that are CPU-bound, such as sorting, parsing, or calculations.
-     */
-    val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    /** Dispatcher for CPU-intensive computations (sorting, parsing, calculations). */
+    val defaultDispatcher: CoroutineDispatcher
 
-    /**
-     * Dispatcher for UI operations that must run on the main thread.
-     */
-    val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
+    /** Dispatcher for UI operations that must run on the main thread. */
+    val mainDispatcher: CoroutineDispatcher
+}
+
+/**
+ * Production implementation of [AppDispatchers] backed by the standard Android dispatchers.
+ */
+class DefaultAppDispatchers : AppDispatchers {
+    override val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    override val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    override val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 }
