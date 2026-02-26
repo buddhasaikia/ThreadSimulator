@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
+
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
@@ -104,34 +104,32 @@ class DataRepository
          *         updates with incremented PE ratio values, or [Resource.Error] if symbol not found
          */
         override suspend fun fetchStockPE(symbol: String): Flow<Resource<CompanyInfo>> =
-            withContext(appDispatchers.ioDispatcher) {
-                flow {
-                    emit(Resource.Loading())
-                    delay(startDelay)
-                    while (true) {
-                        val startTime = System.nanoTime()
-                        val index = getCompanyIndex(symbol)
-                        if (index >= 0) {
-                            delay(updateIntervalPE)
-                            val companyInfo = mockDataSource.getCompanyList()[index]
-                            val updated =
-                                companyInfo.copy(
-                                    peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}",
-                                    threadName = Thread.currentThread().name,
-                                )
-                            val updateTime =
-                                (System.nanoTime() - startTime) / 1_000_000 // Convert to ms
-                            threadMonitor.recordUpdate("PE", updateTime)
-                            emit(Resource.Success(updated))
-                        } else {
-                            emit(Resource.Error(message = "Company with symbol $symbol not found"))
-                            break
-                        }
+            flow {
+                emit(Resource.Loading())
+                delay(startDelay)
+                while (true) {
+                    val startTime = System.nanoTime()
+                    val index = getCompanyIndex(symbol)
+                    if (index >= 0) {
+                        delay(updateIntervalPE)
+                        val companyInfo = mockDataSource.getCompanyList()[index]
+                        val updated =
+                            companyInfo.copy(
+                                peRatio = "${companyInfo.peRatio.toDouble().plus(1.0)}",
+                                threadName = Thread.currentThread().name,
+                            )
+                        val updateTime =
+                            (System.nanoTime() - startTime) / 1_000_000 // Convert to ms
+                        threadMonitor.recordUpdate("PE", updateTime)
+                        emit(Resource.Success(updated))
+                    } else {
+                        emit(Resource.Error(message = "Company with symbol $symbol not found"))
+                        break
                     }
-                }.catch {
-                    emit(Resource.Error(message = it.message ?: ""))
-                }.flowOn(appDispatchers.ioDispatcher)
-            }
+                }
+            }.catch {
+                emit(Resource.Error(message = it.message ?: ""))
+            }.flowOn(appDispatchers.ioDispatcher)
 
         /**
          * Fetches and continuously updates the current price for a given stock symbol.
@@ -144,35 +142,33 @@ class DataRepository
          *         updates with incremented current price values, or [Resource.Error] if symbol not found
          */
         override suspend fun fetchStockCurrentPrice(symbol: String): Flow<Resource<CompanyInfo>> =
-            withContext(appDispatchers.ioDispatcher) {
-                flow {
-                    emit(Resource.Loading())
-                    delay(startDelay)
-                    while (true) {
-                        val index = getCompanyIndex(symbol)
-                        if (index >= 0) {
-                            delay(updateIntervalCurrentPrice)
-                            val companyInfo = mockDataSource.getCompanyList()[index]
-                            val updated =
-                                companyInfo.copy(
-                                    stock =
-                                        companyInfo.stock.copy(
-                                            currentPrice =
-                                                (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
-                                                    2,
-                                                    RoundingMode.HALF_UP,
-                                                ),
-                                        ),
-                                    threadName = Thread.currentThread().name,
-                                )
-                            emit(Resource.Success(updated))
-                        } else {
-                            emit(Resource.Error(message = "Stock not found"))
-                            break
-                        }
+            flow {
+                emit(Resource.Loading())
+                delay(startDelay)
+                while (true) {
+                    val index = getCompanyIndex(symbol)
+                    if (index >= 0) {
+                        delay(updateIntervalCurrentPrice)
+                        val companyInfo = mockDataSource.getCompanyList()[index]
+                        val updated =
+                            companyInfo.copy(
+                                stock =
+                                    companyInfo.stock.copy(
+                                        currentPrice =
+                                            (companyInfo.stock.currentPrice + BigDecimal(1.0)).setScale(
+                                                2,
+                                                RoundingMode.HALF_UP,
+                                            ),
+                                    ),
+                                threadName = Thread.currentThread().name,
+                            )
+                        emit(Resource.Success(updated))
+                    } else {
+                        emit(Resource.Error(message = "Stock not found"))
+                        break
                     }
-                }.flowOn(appDispatchers.ioDispatcher)
-            }
+                }
+            }.flowOn(appDispatchers.ioDispatcher)
 
         /**
          * Fetches and continuously updates the high and low prices for a given stock symbol.
@@ -185,40 +181,38 @@ class DataRepository
          *         updates with incremented high/low values, or [Resource.Error] if symbol not found
          */
         override suspend fun fetchStockHighLow(symbol: String): Flow<Resource<CompanyInfo>> =
-            withContext(appDispatchers.ioDispatcher) {
-                flow {
-                    emit(Resource.Loading())
-                    delay(startDelay)
-                    while (true) {
-                        val index = getCompanyIndex(symbol)
-                        if (index >= 0) {
-                            delay(updateIntervalHighLow)
-                            val companyInfo = mockDataSource.getCompanyList()[index]
-                            val updated =
-                                companyInfo.copy(
-                                    stock =
-                                        companyInfo.stock.copy(
-                                            high =
-                                                (companyInfo.stock.high + BigDecimal(2.0)).setScale(
-                                                    2,
-                                                    RoundingMode.HALF_UP,
-                                                ),
-                                            low =
-                                                (companyInfo.stock.low + BigDecimal(1.0)).setScale(
-                                                    2,
-                                                    RoundingMode.HALF_UP,
-                                                ),
-                                        ),
-                                    threadName = Thread.currentThread().name,
-                                )
-                            emit(Resource.Success(updated))
-                        } else {
-                            emit(Resource.Error(message = "Stock not found"))
-                            break
-                        }
+            flow {
+                emit(Resource.Loading())
+                delay(startDelay)
+                while (true) {
+                    val index = getCompanyIndex(symbol)
+                    if (index >= 0) {
+                        delay(updateIntervalHighLow)
+                        val companyInfo = mockDataSource.getCompanyList()[index]
+                        val updated =
+                            companyInfo.copy(
+                                stock =
+                                    companyInfo.stock.copy(
+                                        high =
+                                            (companyInfo.stock.high + BigDecimal(2.0)).setScale(
+                                                2,
+                                                RoundingMode.HALF_UP,
+                                            ),
+                                        low =
+                                            (companyInfo.stock.low + BigDecimal(1.0)).setScale(
+                                                2,
+                                                RoundingMode.HALF_UP,
+                                            ),
+                                    ),
+                                threadName = Thread.currentThread().name,
+                            )
+                        emit(Resource.Success(updated))
+                    } else {
+                        emit(Resource.Error(message = "Stock not found"))
+                        break
                     }
                 }
-            }
+            }.flowOn(appDispatchers.ioDispatcher)
 
         private fun getCompanyIndex(symbol: String): Int = mockDataSource.getCompanyList().indexOfFirst { it.stock.symbol == symbol }
 
