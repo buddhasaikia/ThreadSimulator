@@ -1,7 +1,7 @@
 # ThreadSimulator
 
 [![CI](https://github.com/buddhasaikia/ThreadSimulator/actions/workflows/ci.yml/badge.svg)](https://github.com/buddhasaikia/ThreadSimulator/actions/workflows/ci.yml)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.1-purple?logo=kotlin)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-purple?logo=kotlin)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-Material3-blue?logo=jetpackcompose)
 ![Coroutines](https://img.shields.io/badge/Coroutines-Channels-orange?logo=kotlin)
 ![Hilt](https://img.shields.io/badge/Hilt-DI-green?logo=android)
@@ -38,7 +38,7 @@
 - **Channel-based aggregation** — All producer coroutines write to a single buffered `Channel` (capacity 15,000, `DROP_OLDEST` overflow) for fan-in aggregation
 - **Configurable throttling** — Three built-in strategies (RAPID ~60 FPS, NORMAL ~30 FPS, RELAXED ~15 FPS) control how often UI updates are emitted
 - **Real-time thread metrics** — Live display of thread IDs, update counts, and average update times per thread
-- **Dropped element tracking** — Monitors and displays the count of elements dropped due to channel overflow
+- **Dropped element tracking** — Monitors and displays the count of undelivered elements (e.g., due to channel closure, cancellation, or receiver failure), excluding elements silently discarded by the `DROP_OLDEST` overflow strategy
 - **Adjustable update intervals** — Change PE, price, and high/low update intervals at runtime
 - **Dynamic list sizing** — Configure how many companies are simulated (5, 10, 50, 100+)
 - **Metrics export** — Export thread metrics to CSV or JSON format
@@ -154,7 +154,7 @@ sequenceDiagram
         VM->>UI: Recomposition triggered
     end
 
-    Note over CH: On overflow → DROP_OLDEST<br/>droppedElementCount++
+    Note over CH: On overflow → DROP_OLDEST (silent, not counted)<br/>droppedElementCount++ only on undelivered elements<br/>(channel closed/cancelled/receiver failure)
 ```
 
 ### Throttle Strategies
@@ -250,7 +250,7 @@ app/src/main/java/com/bs/threadsimulator/
 
 | Category | Technology |
 |----------|-----------|
-| **Language** | Kotlin 2.1 |
+| **Language** | Kotlin 2.2.10 |
 | **UI** | Jetpack Compose + Material 3 |
 | **Concurrency** | Kotlin Coroutines + Channels |
 | **DI** | Hilt (Dagger) with KSP |
@@ -341,7 +341,7 @@ fun provideChannelConfig(): ChannelConfig = ChannelConfig(
 | Problem | Cause | Solution |
 |---------|-------|----------|
 | **UI freezes with large lists** | Too many updates overwhelming the main thread | Increase throttle interval or switch to `RELAXED` strategy; reduce list size |
-| **High dropped element count** | Channel buffer full faster than consumer can process | Increase `ChannelConfig.capacity` or slow down producer intervals |
+| **High dropped element count** | Undelivered elements due to channel closure, cancellation, or receiver failure (not `DROP_OLDEST` overflow) | Check for premature coroutine cancellation; ensure channel isn't closed while producers are still sending |
 | **Metrics show 0 updates** | Simulation not started or coroutines canceled | Ensure you pressed **Start** and that the list is populated |
 | **Export fails** | File permissions or storage access | Check app storage permissions; review Logcat for errors |
 | **Build fails with KSP errors** | Hilt annotation processing issue | Run `./gradlew clean` then rebuild; ensure KSP version matches Kotlin version |
@@ -350,7 +350,7 @@ fun provideChannelConfig(): ChannelConfig = ChannelConfig(
 ### Debugging Tips
 
 - **Enable Timber logging**: Debug logs show channel send/receive activity and undelivered elements
-- **Watch `droppedElementCount`**: A rising count means your channel buffer is saturating — increase capacity or reduce producer speed
+- **Watch `droppedElementCount`**: A rising count indicates undelivered elements (channel closure, cancellation, or receiver failure) — not `DROP_OLDEST` overflow, which silently discards elements without incrementing this counter
 - **Thread metrics**: If `avgUpdateTimeMs` is high for a thread, investigate whether the mock data source introduces excessive delay
 - **StrictMode**: Enable StrictMode in debug builds to catch accidental main-thread I/O
 
