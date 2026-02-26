@@ -160,4 +160,19 @@ class HomeViewModelTest {
         viewModel.errorMessage.value = null
         assertNull("errorMessage should be null after clearing", viewModel.errorMessage.value)
     }
+
+    @Test
+    fun testDroppedElementCountInitiallyZero() {
+        assertEquals(
+            "droppedElementCount should be 0 initially",
+            0L,
+            viewModel.droppedElementCount.value,
+        )
+    }
+
+    @Test
+    fun testDroppedElementCountFlowIsAccessible() {
+        assertNotNull("droppedElementCount should not be null", viewModel.droppedElementCount)
+        assertNotNull("droppedElementCount.value should not be null", viewModel.droppedElementCount.value)
+    }
 }
