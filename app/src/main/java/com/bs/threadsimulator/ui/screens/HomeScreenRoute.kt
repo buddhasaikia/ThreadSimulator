@@ -53,12 +53,14 @@ fun HomeScreenRoute(
     homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
     val threadMetrics by homeViewModel.threadMetrics.collectAsState()
+    val droppedElementCount by homeViewModel.droppedElementCount.collectAsState()
     val errorMessage = homeViewModel.errorMessage.value
 
     HomeScreen(
         innerPadding,
         homeViewModel.companyList,
         threadMetrics = threadMetrics,
+        droppedElementCount = droppedElementCount,
         errorMessage = errorMessage,
         populateList = { homeViewModel.populateList(it) },
         onStart = { homeViewModel.start() },
@@ -77,6 +79,7 @@ fun HomeScreen(
     innerPadding: PaddingValues,
     companyList: List<Company>,
     threadMetrics: List<ThreadMetrics>,
+    droppedElementCount: Long,
     errorMessage: String?,
     onSetUpdateInterval: (UpdateIntervalType, Long) -> Unit,
     populateList: (Int) -> Unit,
@@ -101,12 +104,28 @@ fun HomeScreen(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(
-            text = "Total workers:${threadMetrics.count()}",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Total workers: ${threadMetrics.count()}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            if (droppedElementCount > 0) {
+                Text(
+                    text = "Dropped: $droppedElementCount",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
         // Add thread metrics display
         ThreadMetricsDisplay(threadMetrics)
 
@@ -347,6 +366,7 @@ fun StockListPreview() {
             PaddingValues(2.dp),
             companyList = MockDataSource(DefaultAppDispatchers()).getCompanyList().map { it.toCompany() },
             threadMetrics = listOf(),
+            droppedElementCount = 0L,
             errorMessage = null,
             populateList = {},
             onSetUpdateInterval = { _, _ -> },
