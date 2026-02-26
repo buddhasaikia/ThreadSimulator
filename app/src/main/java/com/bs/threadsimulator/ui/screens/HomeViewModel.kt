@@ -95,10 +95,13 @@ class HomeViewModel
         private val _droppedElementCount = MutableStateFlow(0L)
 
         /**
-         * Observable count of elements dropped due to channel buffer overflow.
+         * Observable count of elements that could not be delivered to receivers.
          *
-         * Increments each time the [ChannelConfig.onBufferOverflow] strategy discards an element.
-         * Useful for monitoring back-pressure and tuning [ChannelConfig.capacity].
+         * Increments each time the channel's `onUndeliveredElement` callback is invoked
+         * (for example, when a send fails due to channel closure, cancellation, or receiver
+         * failure). It does **not** include elements silently discarded by
+         * [BufferOverflow.DROP_OLDEST][kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST].
+         * Useful for monitoring delivery failures and tuning [ChannelConfig.capacity].
          */
         val droppedElementCount: StateFlow<Long> = _droppedElementCount.asStateFlow()
 
