@@ -177,6 +177,7 @@ class ThreadMonitor
          * Computes peak updates per second.
          * Runs in O(n) time using a sliding window over the monotonically increasing timestamps.
          */
+        @Suppress("ReturnCount")
         private fun computePeakUpdatesPerSec(timestamps: List<Long>): Double {
             if (timestamps.isEmpty()) return 0.0
             if (timestamps.size == 1) return 1.0
