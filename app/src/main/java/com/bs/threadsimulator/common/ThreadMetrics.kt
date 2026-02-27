@@ -1,9 +1,9 @@
 package com.bs.threadsimulator.common
 
+import android.os.Debug
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import android.os.Debug
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -79,7 +79,7 @@ class ThreadMonitor
         private val lastThreadStates = ConcurrentHashMap<Long, Thread.State>()
 
         /** Shared channel queue depth counter. */
-        private val _queueDepth = AtomicInteger(0)
+        private val queueDepthCounter = AtomicInteger(0)
 
         /** Per-thread cumulative update time for lightweight per-thread metric. */
         private val perThreadTotalTime = ConcurrentHashMap<Long, AtomicLong>()
@@ -89,7 +89,7 @@ class ThreadMonitor
          * Should be called after successfully sending an element to the channel.
          */
         fun incrementQueueDepth() {
-            _queueDepth.incrementAndGet()
+            queueDepthCounter.incrementAndGet()
         }
 
         /**
@@ -97,7 +97,7 @@ class ThreadMonitor
          * Should be called when an element is received from the channel.
          */
         fun decrementQueueDepth() {
-            _queueDepth.decrementAndGet()
+            queueDepthCounter.decrementAndGet()
         }
 
         /**
@@ -138,7 +138,7 @@ class ThreadMonitor
         }
 
         private fun updateMetrics() {
-            val currentQueueDepth = _queueDepth.get()
+            val currentQueueDepth = queueDepthCounter.get()
             val currentMetrics =
                 updateCounts.keys.map { key ->
                     val (threadId, updateType) = key.split("_", limit = 2)
@@ -185,9 +185,10 @@ class ThreadMonitor
          */
         private fun computeJitter(timestamps: List<Long>): Double {
             if (timestamps.size < 3) return 0.0
-            val intervals = (1 until timestamps.size).map { i ->
-                (timestamps[i] - timestamps[i - 1]).toDouble()
-            }
+            val intervals =
+                (1 until timestamps.size).map { i ->
+                    (timestamps[i] - timestamps[i - 1]).toDouble()
+                }
             val mean = intervals.average()
             val variance = intervals.map { (it - mean) * (it - mean) }.average()
             return sqrt(variance)
@@ -199,13 +200,14 @@ class ThreadMonitor
          * a process-level metric shared across all threads.
          * Returns -1 if unavailable.
          */
-        private fun getThreadAllocatedBytes(@Suppress("UNUSED_PARAMETER") threadId: Long): Long {
-            return try {
+        private fun getThreadAllocatedBytes(
+            @Suppress("UNUSED_PARAMETER") threadId: Long,
+        ): Long =
+            try {
                 Debug.getNativeHeapAllocatedSize()
             } catch (_: Exception) {
                 -1L
             }
-        }
 
         /**
          * Clears all accumulated metrics.
@@ -223,7 +225,7 @@ class ThreadMonitor
             stateTransitionCounts.clear()
             lastThreadStates.clear()
             perThreadTotalTime.clear()
-            _queueDepth.set(0)
+            queueDepthCounter.set(0)
             _metrics.value = emptyList()
         }
 
