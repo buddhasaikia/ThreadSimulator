@@ -331,7 +331,7 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
                 modifier =
                     Modifier
                         .padding(4.dp)
-                        .width(200.dp),
+                        .width(220.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(8.dp),
@@ -350,6 +350,28 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
                     )
                     Text(
                         text = "Avg Time: ${metric.avgUpdateTimeMs}ms",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        text = "Peak UPS: ${"%.1f".format(metric.peakUpdatesPerSec)}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        text = "State Transitions: ${metric.stateTransitions}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        text = "Queue Depth: ${metric.queueDepth}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    if (metric.threadAllocatedBytes >= 0) {
+                        Text(
+                            text = "Memory: ${metric.threadAllocatedBytes / 1024}KB",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    Text(
+                        text = "Jitter: ${"%.2f".format(metric.jitterMs)}ms",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

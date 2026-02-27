@@ -229,6 +229,7 @@ class HomeViewModel
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
                                 channel.send(resource.data)
+                                threadMonitor.incrementQueueDepth()
                             }
 
                             is Resource.Error -> {
@@ -255,6 +256,7 @@ class HomeViewModel
                                 is Resource.Success -> {
                                     if (resource.data == null) return@collect
                                     channel.send(resource.data)
+                                    threadMonitor.incrementQueueDepth()
                                 }
 
                                 is Resource.Error -> {
@@ -278,6 +280,7 @@ class HomeViewModel
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
                                 channel.send(resource.data)
+                                threadMonitor.incrementQueueDepth()
                             }
 
                             is Resource.Error -> {
@@ -296,6 +299,7 @@ class HomeViewModel
             viewModelScope.launch(appDispatchers.mainDispatcher) {
                 try {
                     for (companyData in channel) {
+                        threadMonitor.decrementQueueDepth()
                         ensureActive()
                         val company = _companyList.getOrNull(companyData.id) ?: continue
                         try {

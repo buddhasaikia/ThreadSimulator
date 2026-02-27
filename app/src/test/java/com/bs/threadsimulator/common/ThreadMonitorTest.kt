@@ -78,6 +78,11 @@ class ThreadMonitorTest {
                 updateType = "PE",
                 updateCount = 5,
                 avgUpdateTimeMs = 20,
+                peakUpdatesPerSec = 10.0,
+                stateTransitions = 3,
+                queueDepth = 7,
+                threadAllocatedBytes = 1024L,
+                jitterMs = 2.5,
             )
 
         assertEquals(1L, metrics.threadId)
@@ -85,6 +90,11 @@ class ThreadMonitorTest {
         assertEquals("PE", metrics.updateType)
         assertEquals(5, metrics.updateCount)
         assertEquals(20, metrics.avgUpdateTimeMs)
+        assertEquals(10.0, metrics.peakUpdatesPerSec, 0.01)
+        assertEquals(3, metrics.stateTransitions)
+        assertEquals(7, metrics.queueDepth)
+        assertEquals(1024L, metrics.threadAllocatedBytes)
+        assertEquals(2.5, metrics.jitterMs, 0.01)
     }
 
     @Test
@@ -152,4 +162,111 @@ class ThreadMonitorTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    // --- Advanced metrics tests ---
+
+    @Test
+    fun testPeakUpdatesPerSecIsTracked() {
+        // Record several updates rapidly — they all happen in the same millisecond range
+        repeat(10) {
+            threadMonitor.recordUpdate("PE", 5)
+        }
+
+        val metrics = threadMonitor.metrics.value
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull("PE metric should exist", peMetric)
+        assertTrue(
+            "Peak UPS should be >= 10 (all within 1s window)",
+            peMetric!!.peakUpdatesPerSec >= 10.0,
+        )
+    }
+
+    @Test
+    fun testQueueDepthIncrementAndDecrement() {
+        threadMonitor.incrementQueueDepth()
+        threadMonitor.incrementQueueDepth()
+        threadMonitor.incrementQueueDepth()
+
+        // Record an update to trigger metrics refresh
+        threadMonitor.recordUpdate("PE", 10)
+        var metrics = threadMonitor.metrics.value
+        var peMetric = metrics.find { it.updateType == "PE" }
+        assertEquals("Queue depth should be 3", 3, peMetric!!.queueDepth)
+
+        threadMonitor.decrementQueueDepth()
+        threadMonitor.recordUpdate("PE", 10)
+        metrics = threadMonitor.metrics.value
+        peMetric = metrics.find { it.updateType == "PE" }
+        assertEquals("Queue depth should be 2 after decrement", 2, peMetric!!.queueDepth)
+    }
+
+    @Test
+    fun testJitterIsComputedForMultipleUpdates() {
+        // Rapid calls — jitter should be small or zero
+        repeat(5) {
+            threadMonitor.recordUpdate("PE", 10)
+        }
+
+        val metrics = threadMonitor.metrics.value
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull("PE metric should exist", peMetric)
+        assertTrue(
+            "Jitter should be non-negative",
+            peMetric!!.jitterMs >= 0.0,
+        )
+    }
+
+    @Test
+    fun testThreadAllocatedBytesIsPopulated() {
+        threadMonitor.recordUpdate("PE", 10)
+
+        val metrics = threadMonitor.metrics.value
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull("PE metric should exist", peMetric)
+        // threadAllocatedBytes is either >= 0 (supported) or -1 (unsupported)
+        assertTrue(
+            "Memory should be -1 or a positive value",
+            peMetric!!.threadAllocatedBytes == -1L || peMetric.threadAllocatedBytes > 0,
+        )
+    }
+
+    @Test
+    fun testClearMetricsResetsAdvancedFields() {
+        threadMonitor.incrementQueueDepth()
+        threadMonitor.incrementQueueDepth()
+        threadMonitor.recordUpdate("PE", 100)
+
+        // Verify metrics exist
+        assertTrue(threadMonitor.metrics.value.isNotEmpty())
+
+        threadMonitor.clearMetrics()
+
+        assertTrue("Metrics should be empty after clear", threadMonitor.metrics.value.isEmpty())
+
+        // Record again and verify fresh state
+        threadMonitor.recordUpdate("PE", 50)
+        val metrics = threadMonitor.metrics.value
+        val peMetric = metrics.find { it.updateType == "PE" }
+        assertNotNull(peMetric)
+        assertEquals("Count should be 1 after clear+record", 1L, peMetric!!.updateCount)
+        assertEquals("Queue depth should be 0 after clear", 0, peMetric.queueDepth)
+    }
+
+    @Test
+    fun testThreadMetricsDefaultValues() {
+        val metrics =
+            ThreadMetrics(
+                threadId = 1L,
+                threadName = "Test",
+                updateType = "PE",
+                updateCount = 1,
+                avgUpdateTimeMs = 10,
+            )
+
+        assertEquals("Default peakUpdatesPerSec should be 0.0", 0.0, metrics.peakUpdatesPerSec, 0.01)
+        assertEquals("Default stateTransitions should be 0", 0, metrics.stateTransitions)
+        assertEquals("Default queueDepth should be 0", 0, metrics.queueDepth)
+        assertEquals("Default threadAllocatedBytes should be -1", -1L, metrics.threadAllocatedBytes)
+        assertEquals("Default jitterMs should be 0.0", 0.0, metrics.jitterMs, 0.01)
+    }
 }
