@@ -55,10 +55,11 @@ fun HomeScreenRoute(
     val threadMetrics by homeViewModel.threadMetrics.collectAsState()
     val droppedElementCount by homeViewModel.droppedElementCount.collectAsState()
     val errorMessage = homeViewModel.errorMessage.value
+    val companyList by homeViewModel.companyList.collectAsState()
 
     HomeScreen(
         innerPadding,
-        homeViewModel.companyList,
+        companyList,
         threadMetrics = threadMetrics,
         droppedElementCount = droppedElementCount,
         errorMessage = errorMessage,

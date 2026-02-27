@@ -58,9 +58,11 @@ android {
         compose = true
         buildConfig = true
     }
-    /*composeCompiler{
+    composeCompiler {
         enableStrongSkippingMode = true
-    }*/
+        metricsDestination = layout.buildDirectory.dir("compose_metrics")
+        reportsDestination = layout.buildDirectory.dir("compose_metrics")
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
