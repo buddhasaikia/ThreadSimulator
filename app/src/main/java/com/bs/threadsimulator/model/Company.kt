@@ -45,14 +45,8 @@ class Company(
     fun updateFromDomain(data: CompanyData) {
         this.threadName = data.threadName
         this.peRatio = data.peRatio
-        this.stock =
-            Stock(
-                data.stock.symbol,
-                data.stock.openingPrice,
-                data.stock.closingPrice,
-                data.stock.low,
-                data.stock.high,
-                data.stock.currentPrice,
-            )
+        this.stock.low = data.stock.low
+        this.stock.high = data.stock.high
+        this.stock.currentPrice = data.stock.currentPrice
     }
 }
