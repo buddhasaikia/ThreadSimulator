@@ -88,7 +88,7 @@ class HomeViewModelTest {
 
     @Test
     fun testCompanyListInitiallyEmpty() {
-        assertTrue("companyList should be empty when repository returns empty", viewModel.companyList.isEmpty())
+        assertTrue("companyList should be empty when repository returns empty", viewModel.companyList.value.isEmpty())
     }
 
     @Test
@@ -149,7 +149,7 @@ class HomeViewModelTest {
             viewModel.populateList(5)
             advanceUntilIdle()
 
-            assertTrue("companyList should reflect the repository data", viewModel.companyList.isEmpty())
+            assertTrue("companyList should reflect the repository data", viewModel.companyList.value.isEmpty())
         }
 
     @Test
