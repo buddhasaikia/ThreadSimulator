@@ -22,6 +22,11 @@ data class ExportedThreadMetric(
     val updateType: String,
     val updateCount: Long,
     val avgUpdateTimeMs: Long,
+    val peakUpdatesPerSec: Double = 0.0,
+    val stateTransitions: Int = 0,
+    val queueDepth: Int = 0,
+    val threadAllocatedBytes: Long = -1L,
+    val jitterMs: Double = 0.0,
 )
 
 @Serializable
@@ -110,6 +115,11 @@ class MetricsExporter
                     "Update Type",
                     "Update Count",
                     "Avg Update Time (ms)",
+                    "Peak Updates/Sec",
+                    "State Transitions",
+                    "Queue Depth",
+                    "Thread Allocated Bytes",
+                    "Jitter (ms)",
                 ).joinToString(",") { escapeCsv(it) }
             val rows =
                 metrics.joinToString("\n") { metric ->
@@ -119,6 +129,11 @@ class MetricsExporter
                         metric.updateType,
                         metric.updateCount.toString(),
                         metric.avgUpdateTimeMs.toString(),
+                        "%.2f".format(metric.peakUpdatesPerSec),
+                        metric.stateTransitions.toString(),
+                        metric.queueDepth.toString(),
+                        metric.threadAllocatedBytes.toString(),
+                        "%.2f".format(metric.jitterMs),
                     ).joinToString(",") { value -> escapeCsv(value) }
                 }
             return header + "\n" + rows
@@ -144,6 +159,11 @@ class MetricsExporter
                         updateType = metric.updateType,
                         updateCount = metric.updateCount,
                         avgUpdateTimeMs = metric.avgUpdateTimeMs,
+                        peakUpdatesPerSec = metric.peakUpdatesPerSec,
+                        stateTransitions = metric.stateTransitions,
+                        queueDepth = metric.queueDepth,
+                        threadAllocatedBytes = metric.threadAllocatedBytes,
+                        jitterMs = metric.jitterMs,
                     )
                 }
             val metricsExport =

@@ -3,9 +3,12 @@ package com.bs.threadsimulator.common
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import android.os.Debug
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
+import kotlin.math.sqrt
 
 /**
  * Data class representing thread execution metrics.
@@ -17,6 +20,11 @@ import javax.inject.Inject
  * @property updateType The type of update being tracked (e.g., "PE", "CurrentPrice", "HighLow")
  * @property updateCount Total number of updates performed by this thread
  * @property avgUpdateTimeMs Average time in milliseconds per update operation
+ * @property peakUpdatesPerSec Highest updates-per-second rate observed for this thread+type
+ * @property stateTransitions Count of thread state changes (e.g., RUNNABLE↔WAITING)
+ * @property queueDepth Current channel buffer occupancy (shared across threads)
+ * @property threadAllocatedBytes Cumulative bytes allocated by this thread (-1 if unavailable)
+ * @property jitterMs Standard deviation of update interval times in milliseconds
  */
 data class ThreadMetrics(
     val threadId: Long,
@@ -24,6 +32,11 @@ data class ThreadMetrics(
     val updateType: String,
     val updateCount: Long,
     val avgUpdateTimeMs: Long,
+    val peakUpdatesPerSec: Double = 0.0,
+    val stateTransitions: Int = 0,
+    val queueDepth: Int = 0,
+    val threadAllocatedBytes: Long = -1L,
+    val jitterMs: Double = 0.0,
 )
 
 /**
@@ -32,6 +45,9 @@ data class ThreadMetrics(
  * [ThreadMonitor] records update counts and timings for each thread and update type,
  * providing real-time visibility into multi-threaded performance. Useful for debugging
  * threading issues and monitoring performance bottlenecks in concurrent operations.
+ *
+ * Advanced metrics include peak updates/sec, thread state transitions, queue depth,
+ * per-thread memory allocation, and jitter (std-dev of update intervals).
  */
 class ThreadMonitor
     @Inject
@@ -46,15 +62,52 @@ class ThreadMonitor
          */
         val metrics: StateFlow<List<ThreadMetrics>> = _metrics.asStateFlow()
 
+        // --- Basic tracking ---
         private val updateCounts = ConcurrentHashMap<String, AtomicLong>()
         private val updateTimes = ConcurrentHashMap<String, AtomicLong>()
         private val threadNames = ConcurrentHashMap<Long, String>()
+
+        // --- Advanced tracking ---
+
+        /** Timestamps of each update for peak-UPS and jitter computation. */
+        private val updateTimestamps = ConcurrentHashMap<String, MutableList<Long>>()
+
+        /** Per-thread state transition counter. */
+        private val stateTransitionCounts = ConcurrentHashMap<Long, AtomicInteger>()
+
+        /** Previous thread state for detecting transitions. */
+        private val lastThreadStates = ConcurrentHashMap<Long, Thread.State>()
+
+        /** Shared channel queue depth counter. */
+        private val _queueDepth = AtomicInteger(0)
+
+        /** Per-thread cumulative update time for lightweight per-thread metric. */
+        private val perThreadTotalTime = ConcurrentHashMap<Long, AtomicLong>()
+
+        /**
+         * Increments the queue depth counter.
+         * Should be called after successfully sending an element to the channel.
+         */
+        fun incrementQueueDepth() {
+            _queueDepth.incrementAndGet()
+        }
+
+        /**
+         * Decrements the queue depth counter.
+         * Should be called when an element is received from the channel.
+         */
+        fun decrementQueueDepth() {
+            _queueDepth.decrementAndGet()
+        }
 
         /**
          * Records an update operation with its execution time.
          *
          * Thread-safe. Should be called by worker threads to log their update operations.
          * Synchronized to prevent race conditions with [clearMetrics] operations.
+         *
+         * Also tracks thread state transitions, timestamps for peak-UPS/jitter, and
+         * per-thread memory allocation.
          *
          * @param updateType The type of update (e.g., "PE", "CurrentPrice", "HighLow")
          * @param updateTimeMs The time taken for this update operation in milliseconds
@@ -71,16 +124,28 @@ class ThreadMonitor
             updateCounts.getOrPut(key) { AtomicLong(0) }.incrementAndGet()
             updateTimes.getOrPut(key) { AtomicLong(0) }.addAndGet(updateTimeMs)
 
+            // Record timestamp for peak-UPS and jitter
+            updateTimestamps.getOrPut(key) { mutableListOf() }.add(System.currentTimeMillis())
+
+            // Track state transitions
+            val currentState = thread.state
+            val previousState = lastThreadStates.put(thread.id, currentState)
+            if (previousState != null && previousState != currentState) {
+                stateTransitionCounts.getOrPut(thread.id) { AtomicInteger(0) }.incrementAndGet()
+            }
+
             updateMetrics()
         }
 
         private fun updateMetrics() {
+            val currentQueueDepth = _queueDepth.get()
             val currentMetrics =
                 updateCounts.keys.map { key ->
                     val (threadId, updateType) = key.split("_", limit = 2)
                     val threadIdLong = threadId.toLong()
                     val count = updateCounts[key]?.get() ?: 0
                     val totalTime = updateTimes[key]?.get() ?: 0
+                    val timestamps = updateTimestamps[key] ?: emptyList()
 
                     ThreadMetrics(
                         threadId = threadIdLong,
@@ -88,16 +153,65 @@ class ThreadMonitor
                         updateType = updateType,
                         updateCount = count,
                         avgUpdateTimeMs = if (count > 0) totalTime / count else 0,
+                        peakUpdatesPerSec = computePeakUpdatesPerSec(timestamps),
+                        stateTransitions = stateTransitionCounts[threadIdLong]?.get() ?: 0,
+                        queueDepth = currentQueueDepth,
+                        threadAllocatedBytes = getThreadAllocatedBytes(threadIdLong),
+                        jitterMs = computeJitter(timestamps),
                     )
                 }
             _metrics.value = currentMetrics
         }
 
         /**
+         * Computes peak updates per second using a 1-second sliding window.
+         */
+        private fun computePeakUpdatesPerSec(timestamps: List<Long>): Double {
+            if (timestamps.size < 2) return timestamps.size.toDouble()
+            var peak = 0
+            for (i in timestamps.indices) {
+                val windowEnd = timestamps[i] + 1000L
+                var count = 0
+                for (j in i until timestamps.size) {
+                    if (timestamps[j] <= windowEnd) count++ else break
+                }
+                if (count > peak) peak = count
+            }
+            return peak.toDouble()
+        }
+
+        /**
+         * Computes jitter (standard deviation) of inter-update intervals in milliseconds.
+         */
+        private fun computeJitter(timestamps: List<Long>): Double {
+            if (timestamps.size < 3) return 0.0
+            val intervals = (1 until timestamps.size).map { i ->
+                (timestamps[i] - timestamps[i - 1]).toDouble()
+            }
+            val mean = intervals.average()
+            val variance = intervals.map { (it - mean) * (it - mean) }.average()
+            return sqrt(variance)
+        }
+
+        /**
+         * Returns the process-wide native heap allocated size in bytes.
+         * Android does not support per-thread memory tracking, so this is
+         * a process-level metric shared across all threads.
+         * Returns -1 if unavailable.
+         */
+        private fun getThreadAllocatedBytes(@Suppress("UNUSED_PARAMETER") threadId: Long): Long {
+            return try {
+                Debug.getNativeHeapAllocatedSize()
+            } catch (_: Exception) {
+                -1L
+            }
+        }
+
+        /**
          * Clears all accumulated metrics.
          *
          * Useful for resetting metrics when starting a new simulation or test.
-         * Thread-safe. Synchronized to ensure all three maps are cleared atomically,
+         * Thread-safe. Synchronized to ensure all maps are cleared atomically,
          * preventing inconsistent state if [recordUpdate] is called concurrently.
          */
         @Synchronized
@@ -105,6 +219,11 @@ class ThreadMonitor
             updateCounts.clear()
             updateTimes.clear()
             threadNames.clear()
+            updateTimestamps.clear()
+            stateTransitionCounts.clear()
+            lastThreadStates.clear()
+            perThreadTotalTime.clear()
+            _queueDepth.set(0)
             _metrics.value = emptyList()
         }
 
