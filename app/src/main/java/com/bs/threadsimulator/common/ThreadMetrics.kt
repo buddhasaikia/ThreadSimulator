@@ -109,7 +109,6 @@ class ThreadMonitor
          * @param updateType The type of update (e.g., "PE", "CurrentPrice", "HighLow")
          * @param updateTimeMs The time taken for this update operation in milliseconds
          */
-        @Synchronized
         fun recordUpdate(
             updateType: String,
             updateTimeMs: Long,
@@ -117,26 +116,28 @@ class ThreadMonitor
             val thread = Thread.currentThread()
             val key = "${thread.id}_$updateType"
 
-            threadNames.putIfAbsent(thread.id, thread.name)
-            updateCounts.getOrPut(key) { AtomicLong(0) }.incrementAndGet()
-            updateTimes.getOrPut(key) { AtomicLong(0) }.addAndGet(updateTimeMs)
+            synchronized(this) {
+                threadNames.putIfAbsent(thread.id, thread.name)
+                updateCounts.getOrPut(key) { AtomicLong(0) }.incrementAndGet()
+                updateTimes.getOrPut(key) { AtomicLong(0) }.addAndGet(updateTimeMs)
 
-            // Record timestamp for peak-UPS and jitter with bounded 10-second retention window
-            val now = System.currentTimeMillis()
-            val timestamps = updateTimestamps.getOrPut(key) { mutableListOf() }
-            timestamps.add(now)
+                // Record timestamp for peak-UPS and jitter with bounded 10-second retention window
+                val now = System.currentTimeMillis()
+                val timestamps = updateTimestamps.getOrPut(key) { mutableListOf() }
+                timestamps.add(now)
 
-            val retentionWindowMs = 10_000L
-            val cutoff = now - retentionWindowMs
-            while (timestamps.isNotEmpty() && timestamps[0] < cutoff) {
-                timestamps.removeAt(0)
-            }
+                val retentionWindowMs = 10_000L
+                val cutoff = now - retentionWindowMs
+                while (timestamps.isNotEmpty() && timestamps[0] < cutoff) {
+                    timestamps.removeAt(0)
+                }
 
-            // Track state transitions
-            val currentState = thread.state
-            val previousState = lastThreadStates.put(thread.id, currentState)
-            if (previousState != null && previousState != currentState) {
-                stateTransitionCounts.getOrPut(thread.id) { AtomicInteger(0) }.incrementAndGet()
+                // Track state transitions
+                val currentState = thread.state
+                val previousState = lastThreadStates.put(thread.id, currentState)
+                if (previousState != null && previousState != currentState) {
+                    stateTransitionCounts.getOrPut(thread.id) { AtomicInteger(0) }.incrementAndGet()
+                }
             }
 
             updateMetrics()
@@ -150,7 +151,11 @@ class ThreadMonitor
                     val threadIdLong = threadId.toLong()
                     val count = updateCounts[key]?.get() ?: 0
                     val totalTime = updateTimes[key]?.get() ?: 0
-                    val timestamps = updateTimestamps[key] ?: emptyList()
+
+                    val timestamps =
+                        synchronized(this) {
+                            updateTimestamps[key]?.toList() ?: emptyList()
+                        }
 
                     ThreadMetrics(
                         threadId = threadIdLong,
