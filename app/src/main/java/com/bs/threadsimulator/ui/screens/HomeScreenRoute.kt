@@ -366,7 +366,7 @@ private fun ThreadMetricsDisplay(threadMetrics: List<ThreadMetrics>) {
                     )
                     if (metric.threadAllocatedBytes >= 0) {
                         Text(
-                            text = "Memory: ${metric.threadAllocatedBytes / 1024}KB",
+                            text = "Memory: ${"%.2f".format(metric.threadAllocatedBytes / 1024.0)} KB",
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }

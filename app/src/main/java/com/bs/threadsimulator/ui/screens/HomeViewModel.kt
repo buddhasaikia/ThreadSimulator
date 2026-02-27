@@ -228,8 +228,13 @@ class HomeViewModel
                         when (resource) {
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
-                                channel.send(resource.data)
                                 threadMonitor.incrementQueueDepth()
+                                try {
+                                    channel.send(resource.data)
+                                } catch (e: Exception) {
+                                    threadMonitor.decrementQueueDepth()
+                                    throw e
+                                }
                             }
 
                             is Resource.Error -> {
@@ -255,8 +260,13 @@ class HomeViewModel
                             when (resource) {
                                 is Resource.Success -> {
                                     if (resource.data == null) return@collect
-                                    channel.send(resource.data)
                                     threadMonitor.incrementQueueDepth()
+                                    try {
+                                        channel.send(resource.data)
+                                    } catch (e: Exception) {
+                                        threadMonitor.decrementQueueDepth()
+                                        throw e
+                                    }
                                 }
 
                                 is Resource.Error -> {
@@ -279,8 +289,13 @@ class HomeViewModel
                         when (resource) {
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
-                                channel.send(resource.data)
                                 threadMonitor.incrementQueueDepth()
+                                try {
+                                    channel.send(resource.data)
+                                } catch (e: Exception) {
+                                    threadMonitor.decrementQueueDepth()
+                                    throw e
+                                }
                             }
 
                             is Resource.Error -> {
