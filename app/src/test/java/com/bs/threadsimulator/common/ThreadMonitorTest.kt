@@ -166,6 +166,27 @@ class ThreadMonitorTest {
     // --- Advanced metrics tests ---
 
     @Test
+    fun testQueueDepthCanBeNegativeTemporarily() {
+        // Simulates consumer receiving before producer has recorded increment (edge case in channels)
+        threadMonitor.decrementQueueDepth()
+        threadMonitor.decrementQueueDepth()
+
+        threadMonitor.recordUpdate("PE", 10)
+        var metrics = threadMonitor.metrics.value
+        var peMetric = metrics.find { it.updateType == "PE" }
+        assertEquals("Queue depth should be -2", -2, peMetric!!.queueDepth)
+
+        threadMonitor.incrementQueueDepth()
+        threadMonitor.incrementQueueDepth()
+        threadMonitor.incrementQueueDepth()
+
+        threadMonitor.recordUpdate("PE", 10)
+        metrics = threadMonitor.metrics.value
+        peMetric = metrics.find { it.updateType == "PE" }
+        assertEquals("Queue depth should be 1", 1, peMetric!!.queueDepth)
+    }
+
+    @Test
     fun testPeakUpdatesPerSecIsTracked() {
         // Record several updates rapidly — they all happen in the same millisecond range
         repeat(10) {

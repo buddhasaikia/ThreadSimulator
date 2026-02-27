@@ -81,9 +81,6 @@ class ThreadMonitor
         /** Shared channel queue depth counter. */
         private val queueDepthCounter = AtomicInteger(0)
 
-        /** Per-thread cumulative update time for lightweight per-thread metric. */
-        private val perThreadTotalTime = ConcurrentHashMap<Long, AtomicLong>()
-
         /**
          * Increments the queue depth counter.
          * Should be called after successfully sending an element to the channel.
@@ -124,8 +121,16 @@ class ThreadMonitor
             updateCounts.getOrPut(key) { AtomicLong(0) }.incrementAndGet()
             updateTimes.getOrPut(key) { AtomicLong(0) }.addAndGet(updateTimeMs)
 
-            // Record timestamp for peak-UPS and jitter
-            updateTimestamps.getOrPut(key) { mutableListOf() }.add(System.currentTimeMillis())
+            // Record timestamp for peak-UPS and jitter with bounded 10-second retention window
+            val now = System.currentTimeMillis()
+            val timestamps = updateTimestamps.getOrPut(key) { mutableListOf() }
+            timestamps.add(now)
+
+            val retentionWindowMs = 10_000L
+            val cutoff = now - retentionWindowMs
+            while (timestamps.isNotEmpty() && timestamps[0] < cutoff) {
+                timestamps.removeAt(0)
+            }
 
             // Track state transitions
             val currentState = thread.state
@@ -164,18 +169,28 @@ class ThreadMonitor
         }
 
         /**
-         * Computes peak updates per second using a 1-second sliding window.
+         * Computes peak updates per second.
+         * Runs in O(n) time using a sliding window over the monotonically increasing timestamps.
          */
         private fun computePeakUpdatesPerSec(timestamps: List<Long>): Double {
-            if (timestamps.size < 2) return timestamps.size.toDouble()
+            if (timestamps.isEmpty()) return 0.0
+            if (timestamps.size == 1) return 1.0
+
+            val windowMillis = 1000L
             var peak = 0
-            for (i in timestamps.indices) {
-                val windowEnd = timestamps[i] + 1000L
-                var count = 0
-                for (j in i until timestamps.size) {
-                    if (timestamps[j] <= windowEnd) count++ else break
+            var start = 0
+
+            for (end in timestamps.indices) {
+                val windowStart = timestamps[end] - windowMillis
+
+                while (start < end && timestamps[start] <= windowStart) {
+                    start++
                 }
-                if (count > peak) peak = count
+
+                val count = end - start + 1
+                if (count > peak) {
+                    peak = count
+                }
             }
             return peak.toDouble()
         }
@@ -184,7 +199,7 @@ class ThreadMonitor
          * Computes jitter (standard deviation) of inter-update intervals in milliseconds.
          */
         private fun computeJitter(timestamps: List<Long>): Double {
-            if (timestamps.size < 3) return 0.0
+            if (timestamps.size < 2) return 0.0
             val intervals =
                 (1 until timestamps.size).map { i ->
                     (timestamps[i] - timestamps[i - 1]).toDouble()
@@ -224,7 +239,6 @@ class ThreadMonitor
             updateTimestamps.clear()
             stateTransitionCounts.clear()
             lastThreadStates.clear()
-            perThreadTotalTime.clear()
             queueDepthCounter.set(0)
             _metrics.value = emptyList()
         }
