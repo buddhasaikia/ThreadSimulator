@@ -2,11 +2,14 @@ package com.bs.threadsimulator.domain.service
 
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ChannelConfig
+import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.domain.model.CompanyData
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import javax.inject.Inject
@@ -34,18 +37,33 @@ class StreamCoordinationService
         private val threadMonitor: ThreadMonitor,
     ) {
         /**
-         * Provides access to ThreadMonitor for observing thread execution metrics.
-         * Exposed as a read-only property to maintain clean boundaries.
+         * Provides access to thread execution metrics as a read-only StateFlow.
+         * This exposes only the metrics data without leaking the underlying ThreadMonitor.
          */
-        val monitor: ThreadMonitor
-            get() = threadMonitor
+        val metrics: StateFlow<List<ThreadMetrics>>
+            get() = threadMonitor.metrics
 
         /**
-         * Provides access to AppDispatchers for launching coroutines on appropriate contexts.
-         * Exposed as a read-only property to maintain clean boundaries.
+         * Clears all accumulated thread metrics.
+         * Used when starting a new simulation run.
          */
-        val dispatchers: AppDispatchers
-            get() = appDispatchers
+        fun clearMetrics() {
+            threadMonitor.clearMetrics()
+        }
+
+        /**
+         * Provides the IO dispatcher for launching coroutines.
+         * This separates the concern of dispatcher access from ThreadMonitor.
+         */
+        val ioDispatcher: CoroutineDispatcher
+            get() = appDispatchers.ioDispatcher
+
+        /**
+         * Provides the Main dispatcher for launching coroutines on the main thread.
+         * This separates the concern of dispatcher access from ThreadMonitor.
+         */
+        val mainDispatcher: CoroutineDispatcher
+            get() = appDispatchers.mainDispatcher
 
         /**
          * Creates a new channel for coordinating data flow between producers and consumer.
@@ -53,16 +71,20 @@ class StreamCoordinationService
          * Channel is configured with:
          * - Capacity: from ChannelConfig
          * - Buffer overflow strategy: DROP_OLDEST (prevents blocking on write)
-         * - Undelivered element handler: logs and tracks dropped elements
+         * - Undelivered element handler: logs and tracks dropped elements via the provided callback
          *
+         * @param onDropped Optional callback invoked when an element cannot be delivered
          * @return A new Channel configured for multi-threaded data coordination
          */
-        fun createCoordinationChannel(): Channel<CompanyData> =
+        fun createCoordinationChannel(
+            onDropped: ((CompanyData) -> Unit)? = null,
+        ): Channel<CompanyData> =
             Channel(
                 capacity = channelConfig.capacity,
                 onBufferOverflow = channelConfig.onBufferOverflow,
                 onUndeliveredElement = {
                     Timber.i("Undelivered: %s", it)
+                    onDropped?.invoke(it)
                 },
             )
 
