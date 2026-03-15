@@ -1,4 +1,4 @@
-package com.bs.threadsimulator.domain.service
+package com.bs.threadsimulator.common.service
 
 import com.bs.threadsimulator.common.AppDispatchers
 import com.bs.threadsimulator.common.ChannelConfig
@@ -16,7 +16,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Domain service for coordinating multi-threaded data collection via channels.
+ * Service for coordinating multi-threaded data collection via channels.
  *
  * [StreamCoordinationService] manages the lifecycle of channel-based communication
  * between multiple concurrent data producers (stock fetch operations) and a single

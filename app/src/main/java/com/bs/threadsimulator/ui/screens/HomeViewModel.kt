@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThrottleStrategy
+import com.bs.threadsimulator.common.service.StreamCoordinationService
 import com.bs.threadsimulator.common.throttleUpdates
 import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
@@ -16,7 +17,6 @@ import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.domain.UpdateIntervalType
 import com.bs.threadsimulator.domain.model.CompanyData
-import com.bs.threadsimulator.domain.service.StreamCoordinationService
 import com.bs.threadsimulator.mapper.toCompany
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.ExportedMetrics
