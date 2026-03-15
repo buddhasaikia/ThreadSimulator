@@ -41,6 +41,7 @@ name: "CI Failure Doctor"
     workflows:
     - Daily Perf Improver
     - Daily Test Coverage Improver
+  workflow_dispatch:
 
 permissions: {}
 
