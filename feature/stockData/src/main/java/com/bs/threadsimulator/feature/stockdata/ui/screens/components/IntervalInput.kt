@@ -24,7 +24,7 @@ fun IntervalInput(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
 ) {

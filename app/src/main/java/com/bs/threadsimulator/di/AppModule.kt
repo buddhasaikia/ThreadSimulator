@@ -8,6 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import com.bs.threadsimulator.model.MetricsExporter as MetricsExporterInterface
 
 /**
  * Application-specific DI module providing utilities specific to the app.
@@ -19,5 +20,5 @@ object AppModule {
     @Singleton
     fun provideMetricsExporter(
         @ApplicationContext context: Context,
-    ): MetricsExporter = MetricsExporter(context)
+    ): MetricsExporterInterface = MetricsExporter(context)
 }

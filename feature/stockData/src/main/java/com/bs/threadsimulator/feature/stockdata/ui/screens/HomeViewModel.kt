@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThrottleStrategy
-import com.bs.threadsimulator.feature.stockdata.throttleUpdates
 import com.bs.threadsimulator.feature.stockdata.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.feature.stockdata.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.feature.stockdata.domain.FetchStockPEUseCase
@@ -17,6 +16,7 @@ import com.bs.threadsimulator.feature.stockdata.domain.UpdateIntervalType
 import com.bs.threadsimulator.feature.stockdata.domain.model.CompanyData
 import com.bs.threadsimulator.feature.stockdata.domain.service.StreamCoordinationService
 import com.bs.threadsimulator.feature.stockdata.mapper.toCompany
+import com.bs.threadsimulator.feature.stockdata.throttleUpdates
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -212,11 +212,11 @@ class HomeViewModel
                         ensureActive()
                         when (resource) {
                             is Resource.Success -> {
-                                if (resource.data == null) return@collect
+                                val data: CompanyData = resource.data ?: return@collect
                                 try {
                                     streamCoordinationService.sendWithTracking(
                                         channel,
-                                        resource.data,
+                                        data,
                                     )
                                 } catch (e: Exception) {
                                     Timber.e(e, "Failed to send PE data: %s", e.message)
@@ -245,11 +245,11 @@ class HomeViewModel
                             ensureActive()
                             when (resource) {
                                 is Resource.Success -> {
-                                    if (resource.data == null) return@collect
+                                    val data: CompanyData = resource.data ?: return@collect
                                     try {
                                         streamCoordinationService.sendWithTracking(
                                             channel,
-                                            resource.data,
+                                            data,
                                         )
                                     } catch (e: Exception) {
                                         Timber.e(
@@ -279,11 +279,11 @@ class HomeViewModel
                         ensureActive()
                         when (resource) {
                             is Resource.Success -> {
-                                if (resource.data == null) return@collect
+                                val data: CompanyData = resource.data ?: return@collect
                                 try {
                                     streamCoordinationService.sendWithTracking(
                                         channel,
-                                        resource.data,
+                                        data,
                                     )
                                 } catch (e: Exception) {
                                     Timber.e(e, "Failed to send high/low data: %s", e.message)
@@ -309,9 +309,10 @@ class HomeViewModel
                         channel = channel,
                         onUpdate = { companyData ->
                             ensureActive()
-                            val company =
-                                _companyList.getOrNull(companyData.id) ?: return@listenToChannel
-                            company.updateFromDomain(companyData)
+                            val index = _companyList.indexOfFirst { it.stock.symbol == companyData.stock.symbol }
+                            if (index >= 0) {
+                                _companyList[index] = companyData.toCompany()
+                            }
                         },
                         onError = { message, exception ->
                             Timber.e(exception, "Channel error: %s", message)
@@ -338,23 +339,13 @@ class HomeViewModel
         /**
          * Exports collected metrics to the specified format.
          *
-         * Launches the export operation on the IO dispatcher and updates error state.
-         * On success, logs the file path and updates error state with success message.
+         * Currently a placeholder. Implement with MetricsExporter and ExportMetricsUseCase.
          *
          * @param format Export format: "csv" or "json"
          */
         private fun exportMetrics(format: String) {
-            viewModelScope.launch(streamCoordinationService.dispatchers.ioDispatcher) {
-                    is ExportedMetrics.Success -> {
-                        errorMessage.value = "Exported to ${result.fileName}"
-                        Timber.i("Metrics exported to %s: %s", format.uppercase(), result.filePath)
-                    }
-                    is ExportedMetrics.Error -> {
-                        errorMessage.value = "Export failed: ${result.message}"
-                        Timber.e("${format.uppercase()} export failed: %s", result.message)
-                    }
-                }
-            }
+            Timber.d("Export metrics ($format) - NOT YET IMPLEMENTED in feature module")
+            errorMessage.value = "Export not yet available in this module"
         }
 
         /**

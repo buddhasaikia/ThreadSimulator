@@ -5,11 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import com.bs.threadsimulator.ui.screens.HomeScreenRoute
-import com.bs.threadsimulator.ui.theme.ThreadSimulatorTheme
+import com.bs.threadsimulator.feature.stockdata.ui.screens.HomeScreenRoute
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ThreadSimulatorTheme {
+            MaterialTheme {
                 Scaffold(
                     topBar = {
                         TopAppBar(title = { Text("Thread Simulator") })

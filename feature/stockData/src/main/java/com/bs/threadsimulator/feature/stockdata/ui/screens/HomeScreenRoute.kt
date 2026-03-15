@@ -41,8 +41,8 @@ import com.bs.threadsimulator.feature.stockdata.domain.UpdateIntervalType
 import com.bs.threadsimulator.feature.stockdata.ui.screens.components.CompanyItem
 import com.bs.threadsimulator.feature.stockdata.ui.screens.components.IntervalInput
 import com.bs.threadsimulator.feature.stockdata.ui.theme.ThreadSimulatorTheme
-import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.feature.stockdata.utils.InputValidator
+import com.bs.threadsimulator.model.Company
 
 @Composable
 fun HomeScreenRoute(
@@ -304,8 +304,6 @@ fun HomeScreen(
             ) { company ->
                 CompanyItem(
                     company = company,
-                    // Removed animateItemPlacement for compatibility
-                    modifier = Modifier.animateItem(),
                 )
                 HorizontalDivider(color = Color.Transparent, thickness = 8.dp)
             }
