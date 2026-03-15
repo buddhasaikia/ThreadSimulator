@@ -43,6 +43,7 @@ import com.bs.threadsimulator.feature.stockdata.ui.screens.components.IntervalIn
 import com.bs.threadsimulator.feature.stockdata.ui.theme.ThreadSimulatorTheme
 import com.bs.threadsimulator.feature.stockdata.utils.InputValidator
 import com.bs.threadsimulator.model.Company
+import com.bs.threadsimulator.model.ExportedMetrics
 
 @Composable
 fun HomeScreenRoute(
@@ -52,6 +53,7 @@ fun HomeScreenRoute(
     val threadMetrics by homeViewModel.threadMetrics.collectAsState()
     val droppedElementCount by homeViewModel.droppedElementCount.collectAsState()
     val errorMessage = homeViewModel.errorMessage.value
+    val exportResult by homeViewModel.exportResult.collectAsState()
 
     HomeScreen(
         innerPadding,
@@ -59,6 +61,7 @@ fun HomeScreenRoute(
         threadMetrics = threadMetrics,
         droppedElementCount = droppedElementCount,
         errorMessage = errorMessage,
+        exportResult = exportResult,
         populateList = { homeViewModel.populateList(it) },
         onStart = { homeViewModel.start() },
         onStop = { homeViewModel.stop() },
@@ -78,6 +81,7 @@ fun HomeScreen(
     threadMetrics: List<ThreadMetrics>,
     droppedElementCount: Long,
     errorMessage: String?,
+    exportResult: ExportedMetrics?,
     onSetUpdateInterval: (UpdateIntervalType, Long) -> Unit,
     populateList: (Int) -> Unit,
     onStart: () -> Unit,
@@ -99,6 +103,16 @@ fun HomeScreen(
                 modifier = Modifier.padding(16.dp),
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (exportResult is ExportedMetrics.Success) {
+            Text(
+                text = "Exported to: ${exportResult.filePath}",
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(16.dp),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 12.sp,
             )
         }
         Row(
@@ -385,6 +399,7 @@ fun StockListPreview() {
             threadMetrics = listOf(),
             droppedElementCount = 0L,
             errorMessage = null,
+            exportResult = null,
             populateList = {},
             onSetUpdateInterval = { _, _ -> },
             onStart = {},
