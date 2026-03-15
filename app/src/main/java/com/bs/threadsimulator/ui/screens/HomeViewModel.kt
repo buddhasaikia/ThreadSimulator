@@ -4,34 +4,30 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bs.threadsimulator.common.AppDispatchers
-import com.bs.threadsimulator.common.ChannelConfig
 import com.bs.threadsimulator.common.ThreadMetrics
-import com.bs.threadsimulator.common.ThreadMonitor
 import com.bs.threadsimulator.common.ThrottleStrategy
 import com.bs.threadsimulator.common.throttleUpdates
-import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
+import com.bs.threadsimulator.domain.GetCompanyListUseCase
 import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.domain.UpdateIntervalType
 import com.bs.threadsimulator.domain.model.CompanyData
+import com.bs.threadsimulator.domain.service.StreamCoordinationService
 import com.bs.threadsimulator.mapper.toCompany
 import com.bs.threadsimulator.model.Company
 import com.bs.threadsimulator.model.ExportedMetrics
 import com.bs.threadsimulator.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -50,16 +46,14 @@ import javax.inject.Inject
 class HomeViewModel
     @Inject
     constructor(
-        private val stockRepository: StockRepository,
-        private val threadMonitor: ThreadMonitor,
-        private val appDispatchers: AppDispatchers,
         private val fetchStockCurrentPriceUseCase: FetchStockCurrentPriceUseCase,
         private val fetchStockHighLowUseCase: FetchStockHighLowUseCase,
         private val fetchStockPEUseCase: FetchStockPEUseCase,
         private val setUpdateIntervalUseCase: SetUpdateIntervalUseCase,
         private val initCompanyListUseCase: InitCompanyListUseCase,
         private val exportMetricsUseCase: ExportMetricsUseCase,
-        private val channelConfig: ChannelConfig,
+        private val getCompanyListUseCase: GetCompanyListUseCase,
+        private val streamCoordinationService: StreamCoordinationService,
     ) : ViewModel() {
         /**
          * StateFlow of thread execution metrics.
@@ -67,7 +61,8 @@ class HomeViewModel
          * Emits real-time updates showing thread IDs, update counts, and average update times
          * for each data fetch operation (PE, CurrentPrice, HighLow).
          */
-        val threadMetrics: StateFlow<List<ThreadMetrics>> = threadMonitor.metrics
+        val threadMetrics: StateFlow<List<ThreadMetrics>>
+            get() = streamCoordinationService.monitor.metrics
 
         /**
          * Observable error message state.
@@ -79,7 +74,7 @@ class HomeViewModel
         private var currentThrottleStrategy = ThrottleStrategy.NORMAL
         private val _companyList =
             mutableStateListOf<Company>().apply {
-                addAll(stockRepository.getCompanyList().map { it.toCompany() })
+                addAll(getCompanyListUseCase.execute().map { it.toCompany() })
             }
 
         /**
@@ -106,14 +101,7 @@ class HomeViewModel
         val droppedElementCount: StateFlow<Long> = _droppedElementCount.asStateFlow()
 
         private val channel =
-            Channel<CompanyData>(
-                capacity = channelConfig.capacity,
-                onBufferOverflow = channelConfig.onBufferOverflow,
-                onUndeliveredElement = {
-                    _droppedElementCount.update { it + 1 }
-                    Timber.i("Undelivered: %s", it)
-                },
-            )
+            streamCoordinationService.createCoordinationChannel()
 
         private fun adjustThrottlingForListSize(listSize: Int) {
             val throttleMs =
@@ -192,11 +180,11 @@ class HomeViewModel
             viewModelScope.launch {
                 // Ensure all previous jobs are cancelled so they can't emit metrics into the new run.
                 stop()
-                threadMonitor.clearMetrics()
+                streamCoordinationService.monitor.clearMetrics()
                 adjustThrottlingForListSize(listSize)
                 initCompanyListUseCase.execute(listSize)
                 _companyList.clear()
-                _companyList.addAll(stockRepository.getCompanyList().map { it.toCompany() })
+                _companyList.addAll(getCompanyListUseCase.execute().map { it.toCompany() })
             }
         }
 
@@ -213,7 +201,7 @@ class HomeViewModel
          */
         fun start() {
             initChannel(channel)
-            stockRepository.getCompanyList().forEach {
+            getCompanyListUseCase.execute().forEach {
                 fetchCurrentPrice(it.stock.symbol)
                 fetchHighLow(it.stock.symbol)
                 fetchStockPE(it.stock.symbol)
@@ -222,18 +210,19 @@ class HomeViewModel
 
         private fun fetchStockPE(symbol: String) {
             jobs.add(
-                viewModelScope.launch(appDispatchers.ioDispatcher) {
+                viewModelScope.launch(streamCoordinationService.dispatchers.ioDispatcher) {
                     fetchStockPEUseCase.execute(symbol).collect { resource ->
                         ensureActive()
                         when (resource) {
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
-                                threadMonitor.incrementQueueDepth()
                                 try {
-                                    channel.send(resource.data)
+                                    streamCoordinationService.sendWithTracking(
+                                        channel,
+                                        resource.data,
+                                    )
                                 } catch (e: Exception) {
-                                    threadMonitor.decrementQueueDepth()
-                                    throw e
+                                    Timber.e(e, "Failed to send PE data: %s", e.message)
                                 }
                             }
 
@@ -251,7 +240,7 @@ class HomeViewModel
 
         private fun fetchCurrentPrice(symbol: String) {
             jobs.add(
-                viewModelScope.launch(appDispatchers.ioDispatcher) {
+                viewModelScope.launch(streamCoordinationService.dispatchers.ioDispatcher) {
                     fetchStockCurrentPriceUseCase
                         .execute(symbol)
                         .throttleUpdates(currentThrottleStrategy)
@@ -260,12 +249,17 @@ class HomeViewModel
                             when (resource) {
                                 is Resource.Success -> {
                                     if (resource.data == null) return@collect
-                                    threadMonitor.incrementQueueDepth()
                                     try {
-                                        channel.send(resource.data)
+                                        streamCoordinationService.sendWithTracking(
+                                            channel,
+                                            resource.data,
+                                        )
                                     } catch (e: Exception) {
-                                        threadMonitor.decrementQueueDepth()
-                                        throw e
+                                        Timber.e(
+                                            e,
+                                            "Failed to send current price data: %s",
+                                            e.message,
+                                        )
                                     }
                                 }
 
@@ -283,18 +277,19 @@ class HomeViewModel
 
         private fun fetchHighLow(symbol: String) {
             jobs.add(
-                viewModelScope.launch(appDispatchers.ioDispatcher) {
+                viewModelScope.launch(streamCoordinationService.dispatchers.ioDispatcher) {
                     fetchStockHighLowUseCase.execute(symbol).collect { resource ->
                         ensureActive()
                         when (resource) {
                             is Resource.Success -> {
                                 if (resource.data == null) return@collect
-                                threadMonitor.incrementQueueDepth()
                                 try {
-                                    channel.send(resource.data)
+                                    streamCoordinationService.sendWithTracking(
+                                        channel,
+                                        resource.data,
+                                    )
                                 } catch (e: Exception) {
-                                    threadMonitor.decrementQueueDepth()
-                                    throw e
+                                    Timber.e(e, "Failed to send high/low data: %s", e.message)
                                 }
                             }
 
@@ -311,23 +306,21 @@ class HomeViewModel
         }
 
         private fun initChannel(channel: ReceiveChannel<CompanyData>) {
-            viewModelScope.launch(appDispatchers.mainDispatcher) {
-                try {
-                    for (companyData in channel) {
-                        threadMonitor.decrementQueueDepth()
-                        ensureActive()
-                        val company = _companyList.getOrNull(companyData.id) ?: continue
-                        try {
+            viewModelScope.launch(streamCoordinationService.dispatchers.mainDispatcher) {
+                streamCoordinationService
+                    .listenToChannel(
+                        channel = channel,
+                        onUpdate = { companyData ->
+                            ensureActive()
+                            val company =
+                                _companyList.getOrNull(companyData.id) ?: return@listenToChannel
                             company.updateFromDomain(companyData)
-                        } catch (e: Exception) {
-                            Timber.e(e, "Failed to apply update: %s", e.message)
-                            errorMessage.value = "Failed to update UI"
-                        }
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Channel processing failed: %s", e.message)
-                    errorMessage.value = "Internal processing error"
-                }
+                        },
+                        onError = { message, exception ->
+                            Timber.e(exception, "Channel error: %s", message)
+                            errorMessage.value = message
+                        },
+                    ).collect { }
             }
         }
 
@@ -354,7 +347,7 @@ class HomeViewModel
          * @param format Export format: "csv" or "json"
          */
         private fun exportMetrics(format: String) {
-            viewModelScope.launch(appDispatchers.ioDispatcher) {
+            viewModelScope.launch(streamCoordinationService.dispatchers.ioDispatcher) {
                 when (val result = exportMetricsUseCase.execute(format)) {
                     is ExportedMetrics.Success -> {
                         errorMessage.value = "Exported to ${result.fileName}"

@@ -3,14 +3,15 @@ package com.bs.threadsimulator.ui.screens
 import com.bs.threadsimulator.common.ChannelConfig
 import com.bs.threadsimulator.common.TestAppDispatchers
 import com.bs.threadsimulator.common.ThreadMonitor
-import com.bs.threadsimulator.data.repository.StockRepository
 import com.bs.threadsimulator.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.domain.FetchStockPEUseCase
+import com.bs.threadsimulator.domain.GetCompanyListUseCase
 import com.bs.threadsimulator.domain.InitCompanyListUseCase
 import com.bs.threadsimulator.domain.SetUpdateIntervalUseCase
 import com.bs.threadsimulator.domain.UpdateIntervalType
+import com.bs.threadsimulator.domain.service.StreamCoordinationService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -38,40 +39,46 @@ class HomeViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var viewModel: HomeViewModel
     private lateinit var threadMonitor: ThreadMonitor
-    private lateinit var stockRepository: StockRepository
+    private lateinit var streamCoordinationService: StreamCoordinationService
     private lateinit var fetchCurrentPriceUseCase: FetchStockCurrentPriceUseCase
     private lateinit var fetchHighLowUseCase: FetchStockHighLowUseCase
     private lateinit var fetchPEUseCase: FetchStockPEUseCase
     private lateinit var initCompanyListUseCase: InitCompanyListUseCase
     private lateinit var setUpdateIntervalUseCase: SetUpdateIntervalUseCase
     private lateinit var exportMetricsUseCase: ExportMetricsUseCase
+    private lateinit var getCompanyListUseCase: GetCompanyListUseCase
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         threadMonitor = ThreadMonitor()
-        stockRepository = mockk(relaxed = true)
         fetchCurrentPriceUseCase = mockk(relaxed = true)
         fetchHighLowUseCase = mockk(relaxed = true)
         fetchPEUseCase = mockk(relaxed = true)
         initCompanyListUseCase = mockk(relaxed = true)
         setUpdateIntervalUseCase = mockk(relaxed = true)
         exportMetricsUseCase = mockk(relaxed = true)
+        getCompanyListUseCase = mockk(relaxed = true)
 
-        every { stockRepository.getCompanyList() } returns emptyList()
+        every { getCompanyListUseCase.execute() } returns emptyList()
+
+        streamCoordinationService =
+            StreamCoordinationService(
+                TestAppDispatchers(testDispatcher),
+                ChannelConfig(),
+                threadMonitor,
+            )
 
         viewModel =
             HomeViewModel(
-                stockRepository = stockRepository,
-                threadMonitor = threadMonitor,
-                appDispatchers = TestAppDispatchers(testDispatcher),
                 fetchStockCurrentPriceUseCase = fetchCurrentPriceUseCase,
                 fetchStockHighLowUseCase = fetchHighLowUseCase,
                 fetchStockPEUseCase = fetchPEUseCase,
                 setUpdateIntervalUseCase = setUpdateIntervalUseCase,
                 initCompanyListUseCase = initCompanyListUseCase,
                 exportMetricsUseCase = exportMetricsUseCase,
-                channelConfig = ChannelConfig(),
+                getCompanyListUseCase = getCompanyListUseCase,
+                streamCoordinationService = streamCoordinationService,
             )
     }
 
@@ -99,7 +106,7 @@ class HomeViewModelTest {
 
     @Test
     fun testGetCompanyListCalledOnInit() {
-        verify { stockRepository.getCompanyList() }
+        verify { getCompanyListUseCase.execute() }
     }
 
     @Test
@@ -144,12 +151,12 @@ class HomeViewModelTest {
     @Test
     fun testPopulateListClearsAndRefreshesCompanyList() =
         runTest {
-            every { stockRepository.getCompanyList() } returns emptyList()
+            every { getCompanyListUseCase.execute() } returns emptyList()
 
             viewModel.populateList(5)
             advanceUntilIdle()
 
-            assertTrue("companyList should reflect the repository data", viewModel.companyList.isEmpty())
+            assertTrue("companyList should reflect the use case data", viewModel.companyList.isEmpty())
         }
 
     @Test
