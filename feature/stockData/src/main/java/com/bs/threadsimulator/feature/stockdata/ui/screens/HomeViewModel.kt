@@ -83,6 +83,7 @@ class HomeViewModel
         val companyList: List<Company>
             get() = _companyList
         private val jobs = mutableListOf<Job>()
+        private var listenerJob: Job? = null
 
         private val _droppedElementCount = MutableStateFlow(0L)
 
@@ -98,7 +99,10 @@ class HomeViewModel
         val droppedElementCount: StateFlow<Long> = _droppedElementCount.asStateFlow()
 
         private val channel =
-            streamCoordinationService.createCoordinationChannel()
+            streamCoordinationService.createCoordinationChannel { droppedData ->
+                _droppedElementCount.value += 1
+                Timber.w("Element dropped for: %s", droppedData.stock.symbol)
+            }
 
         private fun adjustThrottlingForListSize(listSize: Int) {
             val throttleMs =
@@ -177,6 +181,7 @@ class HomeViewModel
             viewModelScope.launch {
                 // Ensure all previous jobs are cancelled so they can't emit metrics into the new run.
                 stop()
+                _droppedElementCount.value = 0L
                 streamCoordinationService.monitor.clearMetrics()
                 adjustThrottlingForListSize(listSize)
                 initCompanyListUseCase.execute(listSize)
@@ -303,37 +308,47 @@ class HomeViewModel
         }
 
         private fun initChannel(channel: ReceiveChannel<CompanyData>) {
-            viewModelScope.launch(streamCoordinationService.dispatchers.mainDispatcher) {
-                streamCoordinationService
-                    .listenToChannel(
-                        channel = channel,
-                        onUpdate = { companyData ->
-                            ensureActive()
-                            val index = _companyList.indexOfFirst { it.stock.symbol == companyData.stock.symbol }
-                            if (index >= 0) {
-                                _companyList[index] = companyData.toCompany()
-                            }
-                        },
-                        onError = { message, exception ->
-                            Timber.e(exception, "Channel error: %s", message)
-                            errorMessage.value = message
-                        },
-                    ).collect { }
-            }
+            // Cancel previous listener if it exists (shouldn't happen, but be defensive)
+            listenerJob?.cancel()
+
+            listenerJob =
+                viewModelScope.launch(streamCoordinationService.dispatchers.mainDispatcher) {
+                    streamCoordinationService
+                        .listenToChannel(
+                            channel = channel,
+                            onUpdate = { companyData ->
+                                ensureActive()
+                                val index =
+                                    _companyList.indexOfFirst {
+                                        it.stock.symbol == companyData.stock.symbol
+                                    }
+                                if (index >= 0) {
+                                    _companyList[index] = companyData.toCompany()
+                                }
+                            },
+                            onError = { message, exception ->
+                                Timber.e(exception, "Channel error: %s", message)
+                                errorMessage.value = message
+                            },
+                        ).collect { }
+                }
         }
 
         /**
          * Stops all concurrent data fetch operations.
          *
-         * Cancels all active jobs, halting data collection. Thread metrics up to cancellation
-         * are preserved and can still be observed. Safe to call multiple times.
+         * Cancels all active jobs (both producers and channel listener), halting data collection.
+         * Thread metrics up to cancellation are preserved and can still be observed.
+         * Safe to call multiple times.
          *
          * @see start
          */
         fun stop() {
-            Timber.i("Total jobs: %d", jobs.count())
+            Timber.i("Total producer jobs: %d", jobs.count())
             jobs.forEach { it.cancel() }
             jobs.clear()
+            listenerJob?.cancel()
+            listenerJob = null
         }
 
         /**

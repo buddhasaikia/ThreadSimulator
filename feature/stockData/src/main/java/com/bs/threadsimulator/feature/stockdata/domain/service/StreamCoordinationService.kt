@@ -53,16 +53,18 @@ class StreamCoordinationService
          * Channel is configured with:
          * - Capacity: from ChannelConfig
          * - Buffer overflow strategy: DROP_OLDEST (prevents blocking on write)
-         * - Undelivered element handler: logs and tracks dropped elements
+         * - Undelivered element handler: logs and invokes callback for tracking
          *
+         * @param onDropped Optional callback invoked when an element is dropped
          * @return A new Channel configured for multi-threaded data coordination
          */
-        fun createCoordinationChannel(): Channel<CompanyData> =
+        fun createCoordinationChannel(onDropped: ((CompanyData) -> Unit)? = null): Channel<CompanyData> =
             Channel(
                 capacity = channelConfig.capacity,
                 onBufferOverflow = channelConfig.onBufferOverflow,
                 onUndeliveredElement = {
                     Timber.i("Undelivered: %s", it)
+                    onDropped?.invoke(it)
                 },
             )
 
