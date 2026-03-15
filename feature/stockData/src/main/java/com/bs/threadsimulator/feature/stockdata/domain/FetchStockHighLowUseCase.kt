@@ -1,0 +1,31 @@
+package com.bs.threadsimulator.feature.stockdata.domain
+
+import com.bs.threadsimulator.feature.stockdata.data.repository.StockRepository
+import com.bs.threadsimulator.feature.stockdata.domain.model.CompanyData
+import com.bs.threadsimulator.feature.stockdata.mapper.mapToDomainResource
+import com.bs.threadsimulator.model.Resource
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+/**
+ * Use case for fetching and updating stock high and low price data.
+ *
+ * Encapsulates the business logic for retrieving continuous high/low price updates for a given stock.
+ * Coordinates with [StockRepository] to fetch data on the IO dispatcher and maps results to domain models.
+ */
+class FetchStockHighLowUseCase
+    @Inject
+    constructor(
+        private val stockRepository: StockRepository,
+    ) {
+        /**
+         * Executes the high/low price fetch operation.
+         *
+         * @param symbol The stock ticker symbol (e.g., "AAPL")
+         * @return A Flow emitting Resource-wrapped CompanyData with updated high/low prices
+         */
+        suspend fun execute(symbol: String): Flow<Resource<CompanyData>> =
+            stockRepository
+                .fetchStockHighLow(symbol)
+                .mapToDomainResource()
+    }

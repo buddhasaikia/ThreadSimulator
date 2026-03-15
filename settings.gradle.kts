@@ -21,3 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "ThreadSimulator"
 include(":app")
+include(":core:common")
+include(":core:model")
+include(":core:di")
