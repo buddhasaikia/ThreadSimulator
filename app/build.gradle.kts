@@ -85,6 +85,13 @@ android {
 }
 
 dependencies {
+    // Core modules
+    implementation(project(":core:common"))
+    implementation(project(":core:model"))
+    implementation(project(":core:di"))
+
+    // Feature modules
+    implementation(project(":feature:stockData"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

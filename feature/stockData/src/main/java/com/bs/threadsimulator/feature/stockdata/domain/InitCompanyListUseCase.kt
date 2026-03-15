@@ -1,0 +1,25 @@
+package com.bs.threadsimulator.feature.stockdata.domain
+
+import com.bs.threadsimulator.feature.stockdata.data.repository.StockRepository
+import javax.inject.Inject
+
+/**
+ * Use case for initializing the company list with a specified size.
+ *
+ * Creates or refreshes the list of companies available for simulation.
+ * Useful for testing different list sizes and their impact on threading behavior.
+ */
+class InitCompanyListUseCase
+    @Inject
+    constructor(
+        private val stockRepository: StockRepository,
+    ) {
+        /**
+         * Initializes the company list with the specified number of companies.
+         *
+         * @param listSize The number of companies to generate (e.g., 5, 10, 50, 100)
+         */
+        suspend fun execute(listSize: Int) {
+            stockRepository.initCompanyList(listSize)
+        }
+    }
