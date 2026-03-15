@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bs.threadsimulator.common.ThreadMetrics
 import com.bs.threadsimulator.common.ThrottleStrategy
+import com.bs.threadsimulator.feature.stockdata.domain.ExportMetricsUseCase
 import com.bs.threadsimulator.feature.stockdata.domain.FetchStockCurrentPriceUseCase
 import com.bs.threadsimulator.feature.stockdata.domain.FetchStockHighLowUseCase
 import com.bs.threadsimulator.feature.stockdata.domain.FetchStockPEUseCase
@@ -18,6 +19,7 @@ import com.bs.threadsimulator.feature.stockdata.domain.service.StreamCoordinatio
 import com.bs.threadsimulator.feature.stockdata.mapper.toCompany
 import com.bs.threadsimulator.feature.stockdata.throttleUpdates
 import com.bs.threadsimulator.model.Company
+import com.bs.threadsimulator.model.ExportedMetrics
 import com.bs.threadsimulator.model.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -51,6 +53,7 @@ class HomeViewModel
         private val initCompanyListUseCase: InitCompanyListUseCase,
         private val getCompanyListUseCase: GetCompanyListUseCase,
         private val streamCoordinationService: StreamCoordinationService,
+        private val exportMetricsUseCase: ExportMetricsUseCase,
     ) : ViewModel() {
         /**
          * StateFlow of thread execution metrics.
@@ -97,6 +100,17 @@ class HomeViewModel
          * Useful for monitoring delivery failures and tuning [ChannelConfig.capacity].
          */
         val droppedElementCount: StateFlow<Long> = _droppedElementCount.asStateFlow()
+
+        private val _exportResult = MutableStateFlow<ExportedMetrics?>(null)
+
+        /**
+         * Observable result of the last metrics export operation.
+         *
+         * Emits ExportedMetrics.Success (with file details) or ExportedMetrics.Error (with message).
+         * Null when no export has been attempted yet.
+         * Useful for UI feedback (success toast, error alerts).
+         */
+        val exportResult: StateFlow<ExportedMetrics?> = _exportResult.asStateFlow()
 
         private val channel =
             streamCoordinationService.createCoordinationChannel { droppedData ->
@@ -352,33 +366,49 @@ class HomeViewModel
         }
 
         /**
-         * Exports collected metrics to the specified format.
-         *
-         * Currently a placeholder. Implement with MetricsExporter and ExportMetricsUseCase.
-         *
-         * @param format Export format: "csv" or "json"
-         */
-        private fun exportMetrics(format: String) {
-            Timber.d("Export metrics ($format) - NOT YET IMPLEMENTED in feature module")
-            errorMessage.value = "Export not yet available in this module"
-        }
-
-        /**
          * Exports collected metrics to CSV format.
          *
-         * Convenience function that delegates to [exportMetrics] with "csv" format.
+         * Launches the export use case on ViewModelScope. Updates [exportResult] with success/error.
+         * On success, logs file path. On error, updates [errorMessage] for user feedback.
          */
         fun exportMetricsCSV() {
-            exportMetrics("csv")
+            viewModelScope.launch {
+                Timber.i("CSV export requested")
+                val result = exportMetricsUseCase.executeCSV()
+                _exportResult.value = result
+                when (result) {
+                    is ExportedMetrics.Success -> {
+                        Timber.i("CSV exported to: %s", result.filePath)
+                    }
+                    is ExportedMetrics.Error -> {
+                        errorMessage.value = result.message
+                        Timber.e("CSV export error: %s", result.message)
+                    }
+                }
+            }
         }
 
         /**
          * Exports collected metrics to JSON format.
          *
-         * Convenience function that delegates to [exportMetrics] with "json" format.
+         * Launches the export use case on ViewModelScope. Updates [exportResult] with success/error.
+         * On success, logs file path. On error, updates [errorMessage] for user feedback.
          */
         fun exportMetricsJSON() {
-            exportMetrics("json")
+            viewModelScope.launch {
+                Timber.i("JSON export requested")
+                val result = exportMetricsUseCase.executeJSON()
+                _exportResult.value = result
+                when (result) {
+                    is ExportedMetrics.Success -> {
+                        Timber.i("JSON exported to: %s", result.filePath)
+                    }
+                    is ExportedMetrics.Error -> {
+                        errorMessage.value = result.message
+                        Timber.e("JSON export error: %s", result.message)
+                    }
+                }
+            }
         }
 
         override fun onCleared() {
