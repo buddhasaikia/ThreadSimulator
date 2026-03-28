@@ -1,6 +1,5 @@
 package com.bs.threadsimulator.ui.screens
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -78,9 +77,11 @@ class HomeViewModel
 
         private var currentThrottleStrategy = ThrottleStrategy.NORMAL
         private val _companyList =
-            mutableStateListOf<Company>().apply {
-                addAll(stockRepository.getCompanyList().map { it.toCompany() })
-            }
+            MutableStateFlow<List<Company>>(emptyList())
+
+        init {
+            _companyList.value = stockRepository.getCompanyList().map { it.toCompany() }
+        }
 
         /**
          * The current list of companies with their stock data.
@@ -88,8 +89,7 @@ class HomeViewModel
          * Updated in real-time as data arrives from the concurrent fetch operations.
          * Read-only from outside; mutations happen internally via channel processing.
          */
-        val companyList: List<Company>
-            get() = _companyList
+        val companyList: StateFlow<List<Company>> = _companyList.asStateFlow()
         private val jobs = mutableListOf<Job>()
 
         private val _droppedElementCount = MutableStateFlow(0L)
@@ -195,8 +195,7 @@ class HomeViewModel
                 threadMonitor.clearMetrics()
                 adjustThrottlingForListSize(listSize)
                 initCompanyListUseCase.execute(listSize)
-                _companyList.clear()
-                _companyList.addAll(stockRepository.getCompanyList().map { it.toCompany() })
+                _companyList.value = stockRepository.getCompanyList().map { it.toCompany() }
             }
         }
 
@@ -316,7 +315,8 @@ class HomeViewModel
                     for (companyData in channel) {
                         threadMonitor.decrementQueueDepth()
                         ensureActive()
-                        val company = _companyList.getOrNull(companyData.id) ?: continue
+                        val currentList = _companyList.value
+                        val company = currentList.getOrNull(companyData.id) ?: continue
                         try {
                             company.updateFromDomain(companyData)
                         } catch (e: Exception) {
