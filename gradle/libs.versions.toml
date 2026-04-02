@@ -14,7 +14,7 @@ composeBom = "2025.07.00"
 lifecycleRuntimeCompose = "2.9.2"
 # Code quality
 ktlint = "14.0.1"
-detekt = "1.23.7"
+detekt = "1.23.8"
 # Timber logging
 timber = "5.0.1"
 # Serialization
